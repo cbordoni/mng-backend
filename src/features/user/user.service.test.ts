@@ -23,8 +23,6 @@ describe("UserService", () => {
 					name: "John Doe",
 					email: "john@example.com",
 					cellphone: "1234567890",
-					birthday: null,
-					cpf: null,
 					createdAt: new Date(),
 					updatedAt: new Date(),
 				},
@@ -33,8 +31,6 @@ describe("UserService", () => {
 					name: "Jane Doe",
 					email: "jane@example.com",
 					cellphone: "0987654321",
-					birthday: null,
-					cpf: null,
 					createdAt: new Date(),
 					updatedAt: new Date(),
 				},
@@ -62,8 +58,6 @@ describe("UserService", () => {
 				name: `User ${i + 1}`,
 				email: `user${i + 1}@example.com`,
 				cellphone: "1234567890",
-				birthday: null,
-				cpf: null,
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			}));
@@ -104,8 +98,6 @@ describe("UserService", () => {
 				name: "John Doe",
 				email: "john@example.com",
 				cellphone: "1234567890",
-				birthday: null,
-				cpf: null,
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			};
@@ -211,8 +203,6 @@ describe("UserService", () => {
 				name: "John Doe",
 				email: "john@example.com",
 				cellphone: "11987654321",
-				birthday: null,
-				cpf: null,
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			};
@@ -303,8 +293,6 @@ describe("UserService", () => {
 				name: "John Doe",
 				email: "john@example.com",
 				cellphone: "11987654321",
-				birthday: null,
-				cpf: null,
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			};

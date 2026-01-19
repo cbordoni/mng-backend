@@ -53,8 +53,13 @@ export const DeleteImageSchema = t.Object({
 	resolution: t.String(),
 });
 
+export const UpdateProductPriceSchema = t.Object({
+	price: t.Number({ minimum: 0.01 }),
+});
+
 export type CreateProductInput = typeof CreateProductSchema.static;
 export type UpdateProductInput = typeof UpdateProductSchema.static;
 export type ProductIdInput = typeof ProductIdSchema.static;
 export type AddImagesInput = typeof AddImagesSchema.static;
 export type DeleteImageInput = typeof DeleteImageSchema.static;
+export type UpdateProductPriceInput = typeof UpdateProductPriceSchema.static;

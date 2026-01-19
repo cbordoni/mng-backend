@@ -9,6 +9,7 @@ import {
 	CreateProductSchema,
 	DeleteImageSchema,
 	ProductIdSchema,
+	UpdateProductPriceSchema,
 	UpdateProductSchema,
 } from "./product.types";
 
@@ -107,6 +108,20 @@ export const productRoutes = new Elysia({ prefix: "/products" })
 			body: DeleteImageSchema,
 			detail: {
 				summary: "Delete an image from a product",
+				tags: ["Products"],
+			},
+		},
+	)
+	.patch(
+		"/:id/price",
+		async ({ params, body }) => {
+			return await controller.updatePrice(params.id, body.price);
+		},
+		{
+			params: ProductIdSchema,
+			body: UpdateProductPriceSchema,
+			detail: {
+				summary: "Update product price",
 				tags: ["Products"],
 			},
 		},

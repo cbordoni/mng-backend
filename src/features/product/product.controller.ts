@@ -73,4 +73,13 @@ export class ProductController extends BaseController {
 			(error) => this.handleError(error),
 		);
 	}
+
+	async updatePrice(id: string, price: number) {
+		const result = await this.service.updateProduct(id, { price });
+
+		return result.match(
+			(product) => ({ data: product }),
+			(error) => this.handleError(error),
+		);
+	}
 }
