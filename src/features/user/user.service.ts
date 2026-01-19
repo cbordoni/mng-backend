@@ -9,11 +9,12 @@ import {
 } from "@/shared/errors";
 import { logger } from "@/shared/logger";
 import type { PaginatedResponse } from "@/shared/types";
-import type { UserRepository } from "./user.repository";
+
+import type { IUserRepository } from "./user.repository.interface";
 import type { CreateUserInput, UpdateUserInput } from "./user.types";
 
 export class UserService {
-	constructor(private readonly repository: UserRepository) {}
+	constructor(private readonly repository: IUserRepository) {}
 
 	async getAllUsers(
 		page = 1,

@@ -9,11 +9,12 @@ import {
 } from "@/shared/errors";
 import { logger } from "@/shared/logger";
 import type { PaginatedResponse } from "@/shared/types";
-import type { ProductRepository } from "./product.repository";
+
+import type { IProductRepository } from "./product.repository.interface";
 import type { CreateProductInput, UpdateProductInput } from "./product.types";
 
 export class ProductService {
-	constructor(private readonly repository: ProductRepository) {}
+	constructor(private readonly repository: IProductRepository) {}
 
 	async getAllProducts(
 		page = 1,

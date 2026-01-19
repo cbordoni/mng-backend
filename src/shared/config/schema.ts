@@ -1,11 +1,11 @@
 import {
-  integer,
-  jsonb,
-  numeric,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
+	integer,
+	jsonb,
+	numeric,
+	pgTable,
+	text,
+	timestamp,
+	uuid,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
@@ -36,9 +36,8 @@ export const products = pgTable("products", {
 		scale: 2,
 	}),
 	images: jsonb("images").$type<Record<string, string>>().default({}),
-	installments: jsonb("installments").$type<
-		Array<{ installment: number; fee?: number }>
-	>(),
+	installments:
+		jsonb("installments").$type<Array<{ installment: number; fee?: number }>>(),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

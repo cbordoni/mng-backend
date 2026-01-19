@@ -32,8 +32,5 @@
 			"quoteStyle": "double",
 			"semicolons": "always"
 		}
-	},
-	"organizeImports": {
-		"enabled": true
 	}
 }

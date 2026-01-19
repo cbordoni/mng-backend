@@ -1,18 +1,16 @@
 import { count, eq } from "drizzle-orm";
-import { err, ok, type Result } from "neverthrow";
+import { err, ok } from "neverthrow";
 
 import { db } from "@/shared/config/database";
-import type { Product } from "@/shared/config/schema";
 import { products } from "@/shared/config/schema";
 import { DatabaseError, NotFoundError } from "@/shared/errors";
 import { removeUndefined } from "@/shared/utils";
+
+import type { IProductRepository } from "./product.repository.interface";
 import type { CreateProductInput, UpdateProductInput } from "./product.types";
 
-export class ProductRepository {
-	async findAll(
-		page: number,
-		limit: number,
-	): Promise<Result<{ products: Product[]; total: number }, DatabaseError>> {
+export class ProductRepository implements IProductRepository {
+	async findAll(page: number, limit: number) {
 		try {
 			const offset = (page - 1) * limit;
 
@@ -31,9 +29,7 @@ export class ProductRepository {
 		}
 	}
 
-	async findById(
-		id: string,
-	): Promise<Result<Product, NotFoundError | DatabaseError>> {
+	async findById(id: string) {
 		try {
 			const [product] = await db
 				.select()
@@ -54,9 +50,7 @@ export class ProductRepository {
 		}
 	}
 
-	async create(
-		data: CreateProductInput,
-	): Promise<Result<Product, DatabaseError>> {
+	async create(data: CreateProductInput) {
 		try {
 			const [product] = await db
 				.insert(products)
@@ -83,14 +77,11 @@ export class ProductRepository {
 		}
 	}
 
-	async update(
-		id: string,
-		data: UpdateProductInput,
-	): Promise<Result<Product, NotFoundError | DatabaseError>> {
+	async update(id: string, data: UpdateProductInput) {
 		try {
 			// If price is being updated, fetch current product to preserve old price
 			let oldPrice: string | undefined;
-			
+
 			if (data.price !== undefined) {
 				const currentProduct = (await this.findById(id)).match(
 					(product) => product,
@@ -143,9 +134,7 @@ export class ProductRepository {
 		}
 	}
 
-	async delete(
-		id: string,
-	): Promise<Result<void, NotFoundError | DatabaseError>> {
+	async delete(id: string) {
 		try {
 			const [deleted] = await db
 				.delete(products)
@@ -166,10 +155,7 @@ export class ProductRepository {
 		}
 	}
 
-	async addImages(
-		id: string,
-		images: Record<string, string>,
-	): Promise<Result<Product, NotFoundError | DatabaseError>> {
+	async addImages(id: string, images: Record<string, string>) {
 		try {
 			const [currentProduct] = await db
 				.select({ images: products.images })
@@ -204,10 +190,7 @@ export class ProductRepository {
 		}
 	}
 
-	async deleteImage(
-		id: string,
-		resolution: string,
-	): Promise<Result<Product, NotFoundError | DatabaseError>> {
+	async deleteImage(id: string, resolution: string) {
 		try {
 			const [currentProduct] = await db
 				.select({ images: products.images })

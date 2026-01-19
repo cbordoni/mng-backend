@@ -1,17 +1,15 @@
 import { count, eq } from "drizzle-orm";
-import { err, ok, type Result } from "neverthrow";
+import { err, ok } from "neverthrow";
 
 import { db } from "@/shared/config/database";
-import type { User } from "@/shared/config/schema";
 import { users } from "@/shared/config/schema";
 import { DatabaseError, NotFoundError } from "@/shared/errors";
+
+import type { IUserRepository } from "./user.repository.interface";
 import type { CreateUserInput, UpdateUserInput } from "./user.types";
 
-export class UserRepository {
-	async findAll(
-		page: number,
-		limit: number,
-	): Promise<Result<{ users: User[]; total: number }, DatabaseError>> {
+export class UserRepository implements IUserRepository {
+	async findAll(page: number, limit: number) {
 		try {
 			const offset = (page - 1) * limit;
 
@@ -30,9 +28,7 @@ export class UserRepository {
 		}
 	}
 
-	async findById(
-		id: string,
-	): Promise<Result<User, NotFoundError | DatabaseError>> {
+	async findById(id: string) {
 		try {
 			const [user] = await db.select().from(users).where(eq(users.id, id));
 
@@ -50,7 +46,7 @@ export class UserRepository {
 		}
 	}
 
-	async create(data: CreateUserInput): Promise<Result<User, DatabaseError>> {
+	async create(data: CreateUserInput) {
 		try {
 			const [user] = await db
 				.insert(users)
@@ -71,10 +67,7 @@ export class UserRepository {
 		}
 	}
 
-	async update(
-		id: string,
-		data: UpdateUserInput,
-	): Promise<Result<User, NotFoundError | DatabaseError>> {
+	async update(id: string, data: UpdateUserInput) {
 		try {
 			const [user] = await db
 				.update(users)
@@ -99,9 +92,7 @@ export class UserRepository {
 		}
 	}
 
-	async delete(
-		id: string,
-	): Promise<Result<void, NotFoundError | DatabaseError>> {
+	async delete(id: string) {
 		try {
 			const [user] = await db.delete(users).where(eq(users.id, id)).returning();
 
