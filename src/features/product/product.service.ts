@@ -16,6 +16,25 @@ import type { CreateProductInput, UpdateProductInput } from "./product.types";
 export class ProductService {
 	constructor(private readonly repository: IProductRepository) {}
 
+	private validateName(name: string): Result<void, ValidationError> {
+		if (name.trim().length === 0) {
+			return err(new ValidationError("Name cannot be empty"));
+		}
+
+		return ok(undefined);
+	}
+
+	private validatePositiveNumber(
+		value: number,
+		fieldName: string,
+	): Result<void, ValidationError> {
+		if (value <= 0) {
+			return err(new ValidationError(`${fieldName} must be greater than zero`));
+		}
+
+		return ok(undefined);
+	}
+
 	async getAllProducts(
 		page = 1,
 		limit = 10,
@@ -54,43 +73,53 @@ export class ProductService {
 	): Promise<Result<Product, ValidationError | DatabaseError>> {
 		logger.debug("Creating product", { name: data.name });
 
-		// Business logic validations
-		if (data.name.trim().length === 0) {
+		const nameValidation = this.validateName(data.name);
+
+		if (nameValidation.isErr()) {
 			logger.warn("Product creation failed: empty name");
-			return err(new ValidationError("Name cannot be empty"));
+			return err(nameValidation.error);
 		}
 
-		// Validate price
-		if (data.price <= 0) {
+		const priceValidation = this.validatePositiveNumber(data.price, "Price");
+
+		if (priceValidation.isErr()) {
 			logger.warn("Product creation failed: invalid price");
-			return err(new ValidationError("Price must be greater than zero"));
+			return err(priceValidation.error);
 		}
 
-		// Validate oldPrice if provided
-		if (data.oldPrice !== undefined && data.oldPrice <= 0) {
-			logger.warn("Product creation failed: invalid old price");
-			return err(new ValidationError("Old price must be greater than zero"));
+		if (data.oldPrice !== undefined) {
+			const oldPriceValidation = this.validatePositiveNumber(
+				data.oldPrice,
+				"Old price",
+			);
+
+			if (oldPriceValidation.isErr()) {
+				logger.warn("Product creation failed: invalid old price");
+				return err(oldPriceValidation.error);
+			}
 		}
 
-		// Validate quantity if provided
-		if (data.quantity !== undefined && data.quantity <= 0) {
-			logger.warn("Product creation failed: invalid quantity");
-			return err(new ValidationError("Quantity must be greater than zero"));
+		if (data.quantity !== undefined) {
+			const quantityValidation = this.validatePositiveNumber(
+				data.quantity,
+				"Quantity",
+			);
+			if (quantityValidation.isErr()) {
+				logger.warn("Product creation failed: invalid quantity");
+				return err(quantityValidation.error);
+			}
 		}
 
 		const result = await this.repository.create(data);
 
-		return result.match(
-			(product) => {
-				logger.info("Product created successfully", {
-					id: product.id,
-					name: product.name,
-				});
+		return result.map((product) => {
+			logger.info("Product created successfully", {
+				id: product.id,
+				name: product.name,
+			});
 
-				return ok(product);
-			},
-			(error) => err(error),
-		);
+			return product;
+		});
 	}
 
 	async updateProduct(
@@ -99,33 +128,41 @@ export class ProductService {
 	): Promise<Result<Product, ValidationError | NotFoundError | DatabaseError>> {
 		logger.debug("Updating product", { id, fields: Object.keys(data) });
 
-		// Business logic validations
-		if (data.name !== undefined && data.name.trim().length === 0) {
-			logger.warn("Product update failed: empty name", { id });
-			return err(new ValidationError("Name cannot be empty"));
+		if (data.name !== undefined) {
+			const nameValidation = this.validateName(data.name);
+
+			if (nameValidation.isErr()) {
+				logger.warn("Product update failed: empty name", { id });
+				return err(nameValidation.error);
+			}
 		}
 
-		// Validate price if provided
-		if (data.price !== undefined && data.price <= 0) {
-			logger.warn("Product update failed: invalid price", { id });
-			return err(new ValidationError("Price must be greater than zero"));
+		if (data.price !== undefined) {
+			const priceValidation = this.validatePositiveNumber(data.price, "Price");
+
+			if (priceValidation.isErr()) {
+				logger.warn("Product update failed: invalid price", { id });
+				return err(priceValidation.error);
+			}
 		}
 
-		// Validate quantity if provided
-		if (data.quantity !== undefined && data.quantity <= 0) {
-			logger.warn("Product update failed: invalid quantity", { id });
-			return err(new ValidationError("Quantity must be greater than zero"));
+		if (data.quantity !== undefined) {
+			const quantityValidation = this.validatePositiveNumber(
+				data.quantity,
+				"Quantity",
+			);
+			if (quantityValidation.isErr()) {
+				logger.warn("Product update failed: invalid quantity", { id });
+				return err(quantityValidation.error);
+			}
 		}
 
 		const result = await this.repository.update(id, data);
 
-		return result.match(
-			(product) => {
-				logger.info("Product updated successfully", { id });
-				return ok(product);
-			},
-			(error) => err(error),
-		);
+		return result.map((product) => {
+			logger.info("Product updated successfully", { id });
+			return product;
+		});
 	}
 
 	async deleteProduct(
@@ -135,13 +172,10 @@ export class ProductService {
 
 		const result = await this.repository.delete(id);
 
-		return result.match(
-			() => {
-				logger.info("Product deleted successfully", { id });
-				return ok(undefined);
-			},
-			(error) => err(error),
-		);
+		return result.map(() => {
+			logger.info("Product deleted successfully", { id });
+			return undefined;
+		});
 	}
 
 	async addImages(
@@ -155,13 +189,10 @@ export class ProductService {
 
 		const result = await this.repository.addImages(id, images);
 
-		return result.match(
-			(product) => {
-				logger.info("Images added successfully", { id });
-				return ok(product);
-			},
-			(error) => err(error),
-		);
+		return result.map((product) => {
+			logger.info("Images added successfully", { id });
+			return product;
+		});
 	}
 
 	async deleteImage(
@@ -172,12 +203,9 @@ export class ProductService {
 
 		const result = await this.repository.deleteImage(id, resolution);
 
-		return result.match(
-			(product) => {
-				logger.info("Image deleted successfully", { id });
-				return ok(product);
-			},
-			(error) => err(error),
-		);
+		return result.map((product) => {
+			logger.info("Image deleted successfully", { id });
+			return product;
+		});
 	}
 }

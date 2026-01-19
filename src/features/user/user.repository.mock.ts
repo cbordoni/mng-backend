@@ -34,22 +34,28 @@ export class MockUserRepository
 		return ok(user);
 	}
 
-	async update(id: string, data: UpdateUserInput) {
+	private async updateUserAtIndex(id: string, updater: (user: User) => User) {
 		const indexResult = await this.findIndexById(id);
+
 		if (indexResult.isErr()) {
 			return indexResult as Result<never, NotFoundError>;
 		}
 
 		const index = indexResult.value;
 		const currentUser = this.items[index];
-		const updated: User = {
+		const updated = updater(currentUser);
+
+		this.items[index] = updated;
+
+		return ok(updated);
+	}
+
+	async update(id: string, data: UpdateUserInput) {
+		return this.updateUserAtIndex(id, (currentUser) => ({
 			...currentUser,
 			...data,
 			updatedAt: new Date(),
-		};
-
-		this.items[index] = updated;
-		return ok(updated);
+		}));
 	}
 
 	// Alias helper methods for testing

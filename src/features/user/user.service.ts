@@ -16,6 +16,22 @@ import type { CreateUserInput, UpdateUserInput } from "./user.types";
 export class UserService {
 	constructor(private readonly repository: IUserRepository) {}
 
+	private validateName(name: string): Result<void, ValidationError> {
+		if (name.trim().length === 0) {
+			return err(new ValidationError("Name cannot be empty"));
+		}
+
+		return ok(undefined);
+	}
+
+	private validateCellphone(cellphone: string): Result<void, ValidationError> {
+		if (cellphone.replace(/\D/g, "").length < 10) {
+			return err(new ValidationError("Invalid cellphone number"));
+		}
+
+		return ok(undefined);
+	}
+
 	async getAllUsers(
 		page = 1,
 		limit = 10,
@@ -54,30 +70,30 @@ export class UserService {
 	): Promise<Result<User, ValidationError | DatabaseError>> {
 		logger.debug("Creating user", { email: data.email });
 
-		// Business logic validations
-		if (data.name.trim().length === 0) {
+		const nameValidation = this.validateName(data.name);
+
+		if (nameValidation.isErr()) {
 			logger.warn("User creation failed: empty name");
-			return err(new ValidationError("Name cannot be empty"));
+			return err(nameValidation.error);
 		}
 
-		if (data.cellphone.replace(/\D/g, "").length < 10) {
+		const cellphoneValidation = this.validateCellphone(data.cellphone);
+
+		if (cellphoneValidation.isErr()) {
 			logger.warn("User creation failed: invalid cellphone");
-			return err(new ValidationError("Invalid cellphone number"));
+			return err(cellphoneValidation.error);
 		}
 
 		const result = await this.repository.create(data);
 
-		return result.match(
-			(user) => {
-				logger.info("User created successfully", {
-					id: user.id,
-					email: user.email,
-				});
+		return result.map((user) => {
+			logger.info("User created successfully", {
+				id: user.id,
+				email: user.email,
+			});
 
-				return ok(user);
-			},
-			(error) => err(error),
-		);
+			return user;
+		});
 	}
 
 	async updateUser(
@@ -86,29 +102,30 @@ export class UserService {
 	): Promise<Result<User, ValidationError | NotFoundError | DatabaseError>> {
 		logger.debug("Updating user", { id, fields: Object.keys(data) });
 
-		// Business logic validations
-		if (data.name !== undefined && data.name.trim().length === 0) {
-			logger.warn("User update failed: empty name", { id });
-			return err(new ValidationError("Name cannot be empty"));
+		if (data.name !== undefined) {
+			const nameValidation = this.validateName(data.name);
+
+			if (nameValidation.isErr()) {
+				logger.warn("User update failed: empty name", { id });
+				return err(nameValidation.error);
+			}
 		}
 
-		if (
-			data.cellphone !== undefined &&
-			data.cellphone.replace(/\D/g, "").length < 10
-		) {
-			logger.warn("User update failed: invalid cellphone", { id });
-			return err(new ValidationError("Invalid cellphone number"));
+		if (data.cellphone !== undefined) {
+			const cellphoneValidation = this.validateCellphone(data.cellphone);
+
+			if (cellphoneValidation.isErr()) {
+				logger.warn("User update failed: invalid cellphone", { id });
+				return err(cellphoneValidation.error);
+			}
 		}
 
 		const result = await this.repository.update(id, data);
 
-		return result.match(
-			(user) => {
-				logger.info("User updated successfully", { id });
-				return ok(user);
-			},
-			(error) => err(error),
-		);
+		return result.map((user) => {
+			logger.info("User updated successfully", { id });
+			return user;
+		});
 	}
 
 	async deleteUser(
@@ -118,12 +135,9 @@ export class UserService {
 
 		const result = await this.repository.delete(id);
 
-		return result.match(
-			() => {
-				logger.info("User deleted successfully", { id });
-				return ok(undefined);
-			},
-			(error) => err(error),
-		);
+		return result.map(() => {
+			logger.info("User deleted successfully", { id });
+			return undefined;
+		});
 	}
 }

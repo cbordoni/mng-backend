@@ -1,17 +1,12 @@
 import type { PaginatedResponse, PaginatedResult } from "@/shared/types";
 
 export function toPaginated<T>(
-	data: PaginatedResult<T>,
+	{ items: data, total }: PaginatedResult<T>,
 	page: number,
 	limit: number,
 ): PaginatedResponse<T> {
 	return {
-		data: data.items,
-		meta: {
-			page,
-			limit,
-			total: data.total,
-			totalPages: Math.ceil(data.total / limit),
-		},
+		data,
+		meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
 	};
 }

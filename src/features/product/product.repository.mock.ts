@@ -40,70 +40,63 @@ export class MockProductRepository
 		return ok(product);
 	}
 
-	async update(id: string, data: UpdateProductInput) {
+	private async updateProductAtIndex(
+		id: string,
+		updater: (product: Product) => Product,
+	) {
 		const indexResult = await this.findIndexById(id);
+
 		if (indexResult.isErr()) {
 			return indexResult as Result<never, NotFoundError>;
 		}
 
 		const index = indexResult.value;
 		const currentProduct = this.items[index];
-
-		const oldPrice =
-			data.price !== undefined && data.price.toString() !== currentProduct.price
-				? currentProduct.price
-				: currentProduct.oldPrice;
-
-		const updated: Product = {
-			...currentProduct,
-			...data,
-			date: data.date ? new Date(data.date) : currentProduct.date,
-			price: data.price?.toString() ?? currentProduct.price,
-			oldPrice: oldPrice?.toString() ?? currentProduct.oldPrice,
-			updatedAt: new Date(),
-		};
+		const updated = updater(currentProduct);
 
 		this.items[index] = updated;
+
 		return ok(updated);
+	}
+
+	async update(id: string, data: UpdateProductInput) {
+		return this.updateProductAtIndex(id, (currentProduct) => {
+			const oldPrice =
+				data.price !== undefined &&
+				data.price.toString() !== currentProduct.price
+					? currentProduct.price
+					: currentProduct.oldPrice;
+
+			return {
+				...currentProduct,
+				...data,
+				date: data.date ? new Date(data.date) : currentProduct.date,
+				price: data.price?.toString() ?? currentProduct.price,
+				oldPrice: oldPrice?.toString() ?? currentProduct.oldPrice,
+				updatedAt: new Date(),
+			};
+		});
 	}
 
 	async addImages(id: string, images: Record<string, string>) {
-		const indexResult = await this.findIndexById(id);
-		if (indexResult.isErr()) {
-			return indexResult as Result<never, NotFoundError>;
-		}
-
-		const index = indexResult.value;
-		const currentProduct = this.items[index];
-		const updated: Product = {
+		return this.updateProductAtIndex(id, (currentProduct) => ({
 			...currentProduct,
 			images: { ...(currentProduct.images ?? {}), ...images },
 			updatedAt: new Date(),
-		};
-
-		this.items[index] = updated;
-		return ok(updated);
+		}));
 	}
 
 	async deleteImage(id: string, resolution: string) {
-		const indexResult = await this.findIndexById(id);
-		if (indexResult.isErr()) {
-			return indexResult as Result<never, NotFoundError>;
-		}
+		return this.updateProductAtIndex(id, (currentProduct) => {
+			const newImages = { ...(currentProduct.images ?? {}) };
+			delete newImages[resolution];
 
-		const index = indexResult.value;
-		const currentProduct = this.items[index];
-		const newImages = { ...(currentProduct.images ?? {}) };
-		delete newImages[resolution];
-
-		const updated: Product = {
-			...currentProduct,
-			images: newImages,
-			updatedAt: new Date(),
-		};
-
-		this.items[index] = updated;
-		return ok(updated);
+			return {
+				...currentProduct,
+				images: newImages,
+				updatedAt: new Date(),
+			};
+		});
 	}
 
 	// Alias helper methods for testing

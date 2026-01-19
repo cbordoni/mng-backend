@@ -33,6 +33,7 @@ export class UserRepository implements IUserRepository {
 			if (!user) {
 				return err(new NotFoundError("User", id));
 			}
+
 			return ok(user);
 		});
 	}
@@ -87,6 +88,7 @@ export class UserRepository implements IUserRepository {
 			if (!user) {
 				return err(new NotFoundError("User", id));
 			}
+
 			return ok(undefined);
 		});
 	}

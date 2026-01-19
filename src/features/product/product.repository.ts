@@ -35,6 +35,7 @@ export class ProductRepository implements IProductRepository {
 			if (!product) {
 				return err(new NotFoundError("Product", id));
 			}
+
 			return ok(product);
 		});
 	}
@@ -79,7 +80,6 @@ export class ProductRepository implements IProductRepository {
 			const currentPrice = Number.parseFloat(currentProduct.price);
 			const newPrice = data.price;
 
-			// Only set oldPrice if price is changing
 			if (newPrice !== currentPrice) {
 				oldPrice = currentProduct.price;
 			}
@@ -112,6 +112,7 @@ export class ProductRepository implements IProductRepository {
 			if (!product) {
 				return err(new NotFoundError("Product", id));
 			}
+
 			return ok(product);
 		});
 	}
@@ -134,7 +135,7 @@ export class ProductRepository implements IProductRepository {
 		});
 	}
 
-	async addImages(id: string, images: Record<string, string>) {
+	private async getProductImages(id: string) {
 		const currentResult = await wrapDatabaseOperation(
 			() =>
 				db
@@ -144,20 +145,23 @@ export class ProductRepository implements IProductRepository {
 			"Failed to fetch product images",
 		);
 
-		const currentProduct = await currentResult.andThen(([product]) => {
+		return currentResult.andThen(([product]) => {
 			if (!product) {
 				return err(new NotFoundError("Product", id));
 			}
-			return ok(product);
-		});
 
-		if (currentProduct.isErr()) {
-			return err(currentProduct.error);
+			return ok((product.images as Record<string, string>) || {});
+		});
+	}
+
+	async addImages(id: string, images: Record<string, string>) {
+		const currentImagesResult = await this.getProductImages(id);
+
+		if (currentImagesResult.isErr()) {
+			return err(currentImagesResult.error);
 		}
 
-		const currentImages =
-			(currentProduct.value.images as Record<string, string>) || {};
-		const updatedImages = { ...currentImages, ...images };
+		const updatedImages = { ...currentImagesResult.value, ...images };
 
 		const result = await wrapDatabaseOperation(
 			() =>
@@ -173,34 +177,19 @@ export class ProductRepository implements IProductRepository {
 			if (!product) {
 				return err(new NotFoundError("Product", id));
 			}
+
 			return ok(product);
 		});
 	}
 
 	async deleteImage(id: string, resolution: string) {
-		const currentResult = await wrapDatabaseOperation(
-			() =>
-				db
-					.select({ images: products.images })
-					.from(products)
-					.where(eq(products.id, id)),
-			"Failed to fetch product images",
-		);
+		const currentImagesResult = await this.getProductImages(id);
 
-		const currentProduct = await currentResult.andThen(([product]) => {
-			if (!product) {
-				return err(new NotFoundError("Product", id));
-			}
-			return ok(product);
-		});
-
-		if (currentProduct.isErr()) {
-			return err(currentProduct.error);
+		if (currentImagesResult.isErr()) {
+			return err(currentImagesResult.error);
 		}
 
-		const currentImages =
-			(currentProduct.value.images as Record<string, string>) || {};
-		const updatedImages = { ...currentImages };
+		const updatedImages = { ...currentImagesResult.value };
 		delete updatedImages[resolution];
 
 		const result = await wrapDatabaseOperation(
