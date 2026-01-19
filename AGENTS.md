@@ -183,6 +183,15 @@ app.use(authRoutes);
 
 - Sempre usar recursos mais novos e avançados disponíveis
 - Usar preferencialmente path aliases
+- Sempre separar imports do projeto com dependências
+
+```ts
+import {} from "bun";
+
+// Empty line
+
+import {} from "@/feature";
+```
 
 ---
 
