@@ -1,12 +1,11 @@
-import { relations } from "drizzle-orm";
 import {
-	integer,
-	jsonb,
-	numeric,
-	pgTable,
-	text,
-	timestamp,
-	uuid,
+  integer,
+  jsonb,
+  numeric,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
@@ -28,42 +27,21 @@ export const products = pgTable("products", {
 	description: text("description"),
 	quantity: integer("quantity"),
 	date: timestamp("date"),
-	unitSellingPrice: numeric("unit_selling_price", {
+	price: numeric("price", {
 		precision: 10,
 		scale: 2,
 	}).notNull(),
-	unitPurchasePrice: numeric("unit_purchase_price", {
+	oldPrice: numeric("old_price", {
 		precision: 10,
 		scale: 2,
-	}).notNull(),
+	}),
+	images: jsonb("images").$type<Record<string, string>>().default({}),
+	installments: jsonb("installments").$type<
+		Array<{ installment: number; fee?: number }>
+	>(),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
-
-export const productSkus = pgTable("product_skus", {
-	id: uuid("id").primaryKey().defaultRandom(),
-	productId: uuid("product_id")
-		.notNull()
-		.references(() => products.id, { onDelete: "cascade" }),
-	name: text("name").notNull(),
-	images: jsonb("images").$type<string[]>().default([]),
-	createdAt: timestamp("created_at").defaultNow().notNull(),
-	updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export type ProductSku = typeof productSkus.$inferSelect;
-export type NewProductSku = typeof productSkus.$inferInsert;
-
-export const productsRelations = relations(products, ({ many }) => ({
-	skus: many(productSkus),
-}));
-
-export const productSkusRelations = relations(productSkus, ({ one }) => ({
-	product: one(products, {
-		fields: [productSkus.productId],
-		references: [products.id],
-	}),
-}));

@@ -1,7 +1,7 @@
 import { ok, type Result } from "neverthrow";
 
 import { db } from "@/shared/config/database";
-import { DomainError } from "@/shared/errors";
+import type { DomainError } from "@/shared/errors";
 
 import type { HealthStatus } from "./health.types";
 
@@ -23,7 +23,7 @@ class HealthService {
 				},
 				timestamp: new Date().toISOString(),
 			});
-		} catch (error) {
+		} catch (_) {
 			return ok({
 				status: "error",
 				database: {

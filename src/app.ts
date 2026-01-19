@@ -2,7 +2,6 @@ import { openapi } from "@elysiajs/openapi";
 import { Elysia } from "elysia";
 
 import { healthRoutes } from "@/features/health/health.routes";
-import { productSkuRoutes } from "@/features/product-sku/product-sku.routes";
 import { productRoutes } from "@/features/product/product.routes";
 import { userRoutes } from "@/features/user/user.routes";
 import { HttpErrorResponse } from "@/shared/errors";
@@ -47,10 +46,6 @@ export const app = new Elysia()
 				tags: [
 					{ name: "Users", description: "User management endpoints" },
 					{ name: "Products", description: "Product management endpoints" },
-					{
-						name: "Product SKUs",
-						description: "Product SKU management endpoints",
-					},
 					{ name: "Health", description: "Health check endpoints" },
 				],
 			},
@@ -64,5 +59,4 @@ export const app = new Elysia()
 	})
 	.use(healthRoutes)
 	.use(userRoutes)
-	.use(productRoutes)
-	.use(productSkuRoutes);
+	.use(productRoutes);

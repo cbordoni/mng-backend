@@ -67,30 +67,16 @@ export class ProductService {
 			return err(new ValidationError("Name cannot be empty"));
 		}
 
-		// Validate prices
-		if (data.unitSellingPrice <= 0) {
-			logger.warn("Product creation failed: invalid selling price");
-			return err(
-				new ValidationError("Unit selling price must be greater than zero"),
-			);
+		// Validate price
+		if (data.price <= 0) {
+			logger.warn("Product creation failed: invalid price");
+			return err(new ValidationError("Price must be greater than zero"));
 		}
 
-		if (data.unitPurchasePrice <= 0) {
-			logger.warn("Product creation failed: invalid purchase price");
-			return err(
-				new ValidationError("Unit purchase price must be greater than zero"),
-			);
-		}
-
-		if (data.unitSellingPrice < data.unitPurchasePrice) {
-			logger.warn(
-				"Product creation failed: selling price lower than purchase price",
-			);
-			return err(
-				new ValidationError(
-					"Selling price cannot be lower than purchase price",
-				),
-			);
+		// Validate oldPrice if provided
+		if (data.oldPrice !== undefined && data.oldPrice <= 0) {
+			logger.warn("Product creation failed: invalid old price");
+			return err(new ValidationError("Old price must be greater than zero"));
 		}
 
 		// Validate quantity if provided
@@ -126,19 +112,10 @@ export class ProductService {
 			return err(new ValidationError("Name cannot be empty"));
 		}
 
-		// Validate prices if provided
-		if (data.unitSellingPrice !== undefined && data.unitSellingPrice <= 0) {
-			logger.warn("Product update failed: invalid selling price", { id });
-			return err(
-				new ValidationError("Unit selling price must be greater than zero"),
-			);
-		}
-
-		if (data.unitPurchasePrice !== undefined && data.unitPurchasePrice <= 0) {
-			logger.warn("Product update failed: invalid purchase price", { id });
-			return err(
-				new ValidationError("Unit purchase price must be greater than zero"),
-			);
+		// Validate price if provided
+		if (data.price !== undefined && data.price <= 0) {
+			logger.warn("Product update failed: invalid price", { id });
+			return err(new ValidationError("Price must be greater than zero"));
 		}
 
 		// Validate quantity if provided
@@ -169,6 +146,43 @@ export class ProductService {
 			() => {
 				logger.info("Product deleted successfully", { id });
 				return ok(undefined);
+			},
+			(error) => err(error),
+		);
+	}
+
+	async addImages(
+		id: string,
+		images: Record<string, string>,
+	): Promise<Result<Product, NotFoundError | DatabaseError>> {
+		logger.debug("Adding images to product", {
+			id,
+			resolutions: Object.keys(images),
+		});
+
+		const result = await this.repository.addImages(id, images);
+
+		return result.match(
+			(product) => {
+				logger.info("Images added successfully", { id });
+				return ok(product);
+			},
+			(error) => err(error),
+		);
+	}
+
+	async deleteImage(
+		id: string,
+		resolution: string,
+	): Promise<Result<Product, NotFoundError | DatabaseError>> {
+		logger.debug("Deleting image from product", { id, resolution });
+
+		const result = await this.repository.deleteImage(id, resolution);
+
+		return result.match(
+			(product) => {
+				logger.info("Image deleted successfully", { id });
+				return ok(product);
 			},
 			(error) => err(error),
 		);

@@ -8,8 +8,17 @@ export const CreateProductSchema = t.Object({
 		t.Number({ minimum: 1, error: "Quantidade deve ser maior que zero" }),
 	),
 	date: t.Optional(t.String({ format: "date-time" })),
-	unitSellingPrice: t.Number({ minimum: 0.01 }),
-	unitPurchasePrice: t.Number({ minimum: 0.01 }),
+	price: t.Number({ minimum: 0.01 }),
+	oldPrice: t.Optional(t.Number({ minimum: 0.01 })),
+	images: t.Optional(t.Record(t.String(), t.String({ format: "uri" }))),
+	installments: t.Optional(
+		t.Array(
+			t.Object({
+				installment: t.Number({ minimum: 1 }),
+				fee: t.Optional(t.Number({ minimum: 0 })),
+			}),
+		),
+	),
 });
 
 export const UpdateProductSchema = t.Object({
@@ -20,14 +29,32 @@ export const UpdateProductSchema = t.Object({
 		t.Number({ minimum: 1, error: "Quantidade deve ser maior que zero" }),
 	),
 	date: t.Optional(t.String({ format: "date-time" })),
-	unitSellingPrice: t.Optional(t.Number({ minimum: 0.01 })),
-	unitPurchasePrice: t.Optional(t.Number({ minimum: 0.01 })),
+	price: t.Optional(t.Number({ minimum: 0.01 })),
+	images: t.Optional(t.Record(t.String(), t.String({ format: "uri" }))),
+	installments: t.Optional(
+		t.Array(
+			t.Object({
+				installment: t.Number({ minimum: 1 }),
+				fee: t.Optional(t.Number({ minimum: 0 })),
+			}),
+		),
+	),
 });
 
 export const ProductIdSchema = t.Object({
 	id: t.String({ format: "uuid" }),
 });
 
+export const AddImagesSchema = t.Object({
+	images: t.Record(t.String(), t.String({ format: "uri" })),
+});
+
+export const DeleteImageSchema = t.Object({
+	resolution: t.String(),
+});
+
 export type CreateProductInput = typeof CreateProductSchema.static;
 export type UpdateProductInput = typeof UpdateProductSchema.static;
 export type ProductIdInput = typeof ProductIdSchema.static;
+export type AddImagesInput = typeof AddImagesSchema.static;
+export type DeleteImageInput = typeof DeleteImageSchema.static;

@@ -5,6 +5,7 @@ import { db } from "@/shared/config/database";
 import type { Product } from "@/shared/config/schema";
 import { products } from "@/shared/config/schema";
 import { DatabaseError, NotFoundError } from "@/shared/errors";
+import { removeUndefined } from "@/shared/utils";
 import type { CreateProductInput, UpdateProductInput } from "./product.types";
 
 export class ProductRepository {
@@ -65,8 +66,10 @@ export class ProductRepository {
 					description: data.description,
 					quantity: data.quantity,
 					date: data.date ? new Date(data.date) : undefined,
-					unitSellingPrice: data.unitSellingPrice.toString(),
-					unitPurchasePrice: data.unitPurchasePrice.toString(),
+					price: data.price.toString(),
+					oldPrice: data.oldPrice?.toString(),
+					images: data.images,
+					installments: data.installments,
 				})
 				.returning();
 
@@ -85,20 +88,40 @@ export class ProductRepository {
 		data: UpdateProductInput,
 	): Promise<Result<Product, NotFoundError | DatabaseError>> {
 		try {
-			const updateData: Record<string, unknown> = {
-				updatedAt: new Date(),
-			};
+			// If price is being updated, fetch current product to preserve old price
+			let oldPrice: string | undefined;
+			
+			if (data.price !== undefined) {
+				const currentProduct = (await this.findById(id)).match(
+					(product) => product,
+					() => null,
+				);
 
-			if (data.name !== undefined) updateData.name = data.name;
-			if (data.reference !== undefined) updateData.reference = data.reference;
-			if (data.description !== undefined)
-				updateData.description = data.description;
-			if (data.quantity !== undefined) updateData.quantity = data.quantity;
-			if (data.date !== undefined) updateData.date = new Date(data.date);
-			if (data.unitSellingPrice !== undefined)
-				updateData.unitSellingPrice = data.unitSellingPrice.toString();
-			if (data.unitPurchasePrice !== undefined)
-				updateData.unitPurchasePrice = data.unitPurchasePrice.toString();
+				if (!currentProduct) {
+					return err(new NotFoundError("Product", id));
+				}
+
+				const currentPrice = Number.parseFloat(currentProduct.price);
+				const newPrice = data.price;
+
+				// Only set oldPrice if price is changing
+				if (newPrice !== currentPrice) {
+					oldPrice = currentProduct.price;
+				}
+			}
+
+			const updateData = removeUndefined({
+				name: data.name,
+				reference: data.reference,
+				description: data.description,
+				quantity: data.quantity,
+				date: data.date ? new Date(data.date) : undefined,
+				price: data.price?.toString(),
+				oldPrice,
+				images: data.images,
+				installments: data.installments,
+				updatedAt: new Date(),
+			});
 
 			const [product] = await db
 				.update(products)
@@ -138,6 +161,83 @@ export class ProductRepository {
 			return err(
 				new DatabaseError(
 					`Failed to delete product: ${error instanceof Error ? error.message : "Unknown error"}`,
+				),
+			);
+		}
+	}
+
+	async addImages(
+		id: string,
+		images: Record<string, string>,
+	): Promise<Result<Product, NotFoundError | DatabaseError>> {
+		try {
+			const [currentProduct] = await db
+				.select({ images: products.images })
+				.from(products)
+				.where(eq(products.id, id));
+
+			if (!currentProduct) {
+				return err(new NotFoundError("Product", id));
+			}
+
+			const currentImages =
+				(currentProduct.images as Record<string, string>) || {};
+			const updatedImages = { ...currentImages, ...images };
+
+			const [product] = await db
+				.update(products)
+				.set({ images: updatedImages, updatedAt: new Date() })
+				.where(eq(products.id, id))
+				.returning();
+
+			if (!product) {
+				return err(new NotFoundError("Product", id));
+			}
+
+			return ok(product);
+		} catch (error) {
+			return err(
+				new DatabaseError(
+					`Failed to add images: ${error instanceof Error ? error.message : "Unknown error"}`,
+				),
+			);
+		}
+	}
+
+	async deleteImage(
+		id: string,
+		resolution: string,
+	): Promise<Result<Product, NotFoundError | DatabaseError>> {
+		try {
+			const [currentProduct] = await db
+				.select({ images: products.images })
+				.from(products)
+				.where(eq(products.id, id));
+
+			if (!currentProduct) {
+				return err(new NotFoundError("Product", id));
+			}
+
+			const currentImages =
+				(currentProduct.images as Record<string, string>) || {};
+			const updatedImages = { ...currentImages };
+			delete updatedImages[resolution];
+
+			const [product] = await db
+				.update(products)
+				.set({ images: updatedImages, updatedAt: new Date() })
+				.where(eq(products.id, id))
+				.returning();
+
+			if (!product) {
+				return err(new NotFoundError("Product", id));
+			}
+
+			return ok(product);
+		} catch (error) {
+			return err(
+				new DatabaseError(
+					`Failed to delete image: ${error instanceof Error ? error.message : "Unknown error"}`,
 				),
 			);
 		}

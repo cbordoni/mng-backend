@@ -59,6 +59,24 @@ export class ProductController {
 		);
 	}
 
+	async addImages(id: string, images: Record<string, string>) {
+		const result = await this.service.addImages(id, images);
+
+		return result.match(
+			(product) => ({ data: product }),
+			(error) => this.handleError(error),
+		);
+	}
+
+	async deleteImage(id: string, resolution: string) {
+		const result = await this.service.deleteImage(id, resolution);
+
+		return result.match(
+			(product) => ({ data: product }),
+			(error) => this.handleError(error),
+		);
+	}
+
 	private handleError(error: DomainError): HttpErrorResponse {
 		if (error instanceof NotFoundError) {
 			return new HttpErrorResponse(error.message, error.code, 404);

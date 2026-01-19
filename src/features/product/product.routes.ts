@@ -5,7 +5,9 @@ import { ProductController } from "./product.controller";
 import { ProductRepository } from "./product.repository";
 import { ProductService } from "./product.service";
 import {
+	AddImagesSchema,
 	CreateProductSchema,
+	DeleteImageSchema,
 	ProductIdSchema,
 	UpdateProductSchema,
 } from "./product.types";
@@ -77,6 +79,34 @@ export const productRoutes = new Elysia({ prefix: "/products" })
 			params: ProductIdSchema,
 			detail: {
 				summary: "Delete a product",
+				tags: ["Products"],
+			},
+		},
+	)
+	.post(
+		"/:id/images",
+		async ({ params, body }) => {
+			return await controller.addImages(params.id, body.images);
+		},
+		{
+			params: ProductIdSchema,
+			body: AddImagesSchema,
+			detail: {
+				summary: "Add images to a product",
+				tags: ["Products"],
+			},
+		},
+	)
+	.delete(
+		"/:id/images",
+		async ({ params, body }) => {
+			return await controller.deleteImage(params.id, body.resolution);
+		},
+		{
+			params: ProductIdSchema,
+			body: DeleteImageSchema,
+			detail: {
+				summary: "Delete an image from a product",
 				tags: ["Products"],
 			},
 		},
