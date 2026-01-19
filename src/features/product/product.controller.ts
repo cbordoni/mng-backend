@@ -1,16 +1,13 @@
-import type { DomainError } from "@/shared/errors";
-import {
-	DatabaseError,
-	HttpErrorResponse,
-	NotFoundError,
-	ValidationError,
-} from "@/shared/errors";
+import { BaseController } from "@/shared/http/base-controller";
 import type { PaginationQuery } from "@/shared/types";
+
 import type { ProductService } from "./product.service";
 import type { CreateProductInput, UpdateProductInput } from "./product.types";
 
-export class ProductController {
-	constructor(private readonly service: ProductService) {}
+export class ProductController extends BaseController {
+	constructor(private readonly service: ProductService) {
+		super();
+	}
 
 	async getAll(query: PaginationQuery) {
 		const { page = 1, limit = 10 } = query;
@@ -74,26 +71,6 @@ export class ProductController {
 		return result.match(
 			(product) => ({ data: product }),
 			(error) => this.handleError(error),
-		);
-	}
-
-	private handleError(error: DomainError): HttpErrorResponse {
-		if (error instanceof NotFoundError) {
-			return new HttpErrorResponse(error.message, error.code, 404);
-		}
-
-		if (error instanceof ValidationError) {
-			return new HttpErrorResponse(error.message, error.code, 400);
-		}
-
-		if (error instanceof DatabaseError) {
-			return new HttpErrorResponse("Internal server error", error.code, 500);
-		}
-
-		return new HttpErrorResponse(
-			"Internal server error",
-			"INTERNAL_ERROR",
-			500,
 		);
 	}
 }

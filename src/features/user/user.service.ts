@@ -7,9 +7,9 @@ import {
 	type NotFoundError,
 	ValidationError,
 } from "@/shared/errors";
+import { toPaginated } from "@/shared/http/to-paginated";
 import { logger } from "@/shared/logger";
 import type { PaginatedResponse } from "@/shared/types";
-
 import type { IUserRepository } from "./user.repository.interface";
 import type { CreateUserInput, UpdateUserInput } from "./user.types";
 
@@ -25,20 +25,12 @@ export class UserService {
 
 		return result.map((data) => {
 			logger.info("Users fetched successfully", {
-				count: data.users.length,
+				count: data.items.length,
 				total: data.total,
 				page,
 			});
 
-			return {
-				data: data.users,
-				meta: {
-					page,
-					limit,
-					total: data.total,
-					totalPages: Math.ceil(data.total / limit),
-				},
-			};
+			return toPaginated(data, page, limit);
 		});
 	}
 

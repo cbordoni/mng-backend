@@ -1,46 +1,32 @@
-import { err, ok, type Result } from "neverthrow";
+import { ok, type Result } from "neverthrow";
 
 import type { Product } from "@/shared/config/schema";
-import type { DatabaseError, NotFoundError } from "@/shared/errors";
+import type { NotFoundError } from "@/shared/errors";
+import { BaseInMemoryRepository } from "@/shared/testing/base-in-memory-repository";
 
 import type { IProductRepository } from "./product.repository.interface";
 import type { CreateProductInput, UpdateProductInput } from "./product.types";
 
-export class MockProductRepository implements IProductRepository {
-	private products: Product[] = [];
-
-	async findAll(
-		page: number,
-		limit: number,
-	): Promise<Result<{ products: Product[]; total: number }, DatabaseError>> {
-		const offset = (page - 1) * limit;
-		const paginatedProducts = this.products.slice(offset, offset + limit);
-		return ok({ products: paginatedProducts, total: this.products.length });
+export class MockProductRepository
+	extends BaseInMemoryRepository<Product>
+	implements IProductRepository
+{
+	protected get entityName(): string {
+		return "Product";
 	}
 
-	async findById(
-		id: string,
-	): Promise<Result<Product, NotFoundError | DatabaseError>> {
-		const product = this.products.find((p) => p.id === id);
-		if (!product) {
-			return err({
-				name: "NotFoundError",
-				message: `Product with id ${id} not found`,
-			} as NotFoundError);
-		}
-		return ok(product);
+	async findAll(page: number, limit: number) {
+		return await super.findAll(page, limit);
 	}
 
-	async create(
-		data: CreateProductInput,
-	): Promise<Result<Product, DatabaseError>> {
+	async create(data: CreateProductInput) {
 		const product: Product = {
 			id: crypto.randomUUID(),
 			name: data.name,
 			reference: data.reference ?? null,
 			description: data.description ?? null,
 			quantity: data.quantity ?? null,
-			date: data.date ? new Date(data.date) : null,
+			date: data.date !== undefined ? new Date(data.date) : null,
 			price: data.price.toString(),
 			oldPrice: data.oldPrice?.toString() ?? null,
 			images: data.images ?? null,
@@ -48,29 +34,25 @@ export class MockProductRepository implements IProductRepository {
 			createdAt: new Date(),
 			updatedAt: new Date(),
 		};
-		this.products.push(product);
+
+		this.items.push(product);
+
 		return ok(product);
 	}
 
-	async update(
-		id: string,
-		data: UpdateProductInput,
-	): Promise<Result<Product, NotFoundError | DatabaseError>> {
-		const index = this.products.findIndex((p) => p.id === id);
-		if (index === -1) {
-			return err({
-				name: "NotFoundError",
-				message: `Product with id ${id} not found`,
-			} as NotFoundError);
+	async update(id: string, data: UpdateProductInput) {
+		const indexResult = await this.findIndexById(id);
+		if (indexResult.isErr()) {
+			return indexResult as Result<never, NotFoundError>;
 		}
 
-		const oldPrice =
-			data.price !== undefined &&
-			data.price.toString() !== this.products[index].price
-				? this.products[index].price
-				: this.products[index].oldPrice;
+		const index = indexResult.value;
+		const currentProduct = this.items[index];
 
-		const currentProduct = this.products[index];
+		const oldPrice =
+			data.price !== undefined && data.price.toString() !== currentProduct.price
+				? currentProduct.price
+				: currentProduct.oldPrice;
 
 		const updated: Product = {
 			...currentProduct,
@@ -81,60 +63,36 @@ export class MockProductRepository implements IProductRepository {
 			updatedAt: new Date(),
 		};
 
-		this.products[index] = updated;
+		this.items[index] = updated;
 		return ok(updated);
 	}
 
-	async delete(
-		id: string,
-	): Promise<Result<void, NotFoundError | DatabaseError>> {
-		const index = this.products.findIndex((p) => p.id === id);
-		if (index === -1) {
-			return err({
-				name: "NotFoundError",
-				message: `Product with id ${id} not found`,
-			} as NotFoundError);
-		}
-		this.products.splice(index, 1);
-		return ok(undefined);
-	}
-
-	async addImages(
-		id: string,
-		images: Record<string, string>,
-	): Promise<Result<Product, NotFoundError | DatabaseError>> {
-		const index = this.products.findIndex((p) => p.id === id);
-		if (index === -1) {
-			return err({
-				name: "NotFoundError",
-				message: `Product with id ${id} not found`,
-			} as NotFoundError);
+	async addImages(id: string, images: Record<string, string>) {
+		const indexResult = await this.findIndexById(id);
+		if (indexResult.isErr()) {
+			return indexResult as Result<never, NotFoundError>;
 		}
 
-		const currentProduct = this.products[index];
+		const index = indexResult.value;
+		const currentProduct = this.items[index];
 		const updated: Product = {
 			...currentProduct,
 			images: { ...(currentProduct.images ?? {}), ...images },
 			updatedAt: new Date(),
 		};
 
-		this.products[index] = updated;
+		this.items[index] = updated;
 		return ok(updated);
 	}
 
-	async deleteImage(
-		id: string,
-		resolution: string,
-	): Promise<Result<Product, NotFoundError | DatabaseError>> {
-		const index = this.products.findIndex((p) => p.id === id);
-		if (index === -1) {
-			return err({
-				name: "NotFoundError",
-				message: `Product with id ${id} not found`,
-			} as NotFoundError);
+	async deleteImage(id: string, resolution: string) {
+		const indexResult = await this.findIndexById(id);
+		if (indexResult.isErr()) {
+			return indexResult as Result<never, NotFoundError>;
 		}
 
-		const currentProduct = this.products[index];
+		const index = indexResult.value;
+		const currentProduct = this.items[index];
 		const newImages = { ...(currentProduct.images ?? {}) };
 		delete newImages[resolution];
 
@@ -144,16 +102,16 @@ export class MockProductRepository implements IProductRepository {
 			updatedAt: new Date(),
 		};
 
-		this.products[index] = updated;
+		this.items[index] = updated;
 		return ok(updated);
 	}
 
-	// Helper methods for testing
+	// Alias helper methods for testing
 	setProducts(products: Product[]) {
-		this.products = products;
+		this.setItems(products);
 	}
 
 	clearProducts() {
-		this.products = [];
+		this.clearItems();
 	}
 }

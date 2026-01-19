@@ -183,6 +183,7 @@ app.use(authRoutes);
 
 - Sempre usar recursos mais novos e avançados disponíveis
 - Usar preferencialmente path aliases
+- Sempre adicionar uma nova linha em branco após um if statement
 - Sempre separar imports do projeto com dependências
 
 ```ts

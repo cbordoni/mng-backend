@@ -7,9 +7,9 @@ import {
 	type NotFoundError,
 	ValidationError,
 } from "@/shared/errors";
+import { toPaginated } from "@/shared/http/to-paginated";
 import { logger } from "@/shared/logger";
 import type { PaginatedResponse } from "@/shared/types";
-
 import type { IProductRepository } from "./product.repository.interface";
 import type { CreateProductInput, UpdateProductInput } from "./product.types";
 
@@ -25,20 +25,12 @@ export class ProductService {
 
 		return result.map((data) => {
 			logger.info("Products fetched successfully", {
-				count: data.products.length,
+				count: data.items.length,
 				total: data.total,
 				page,
 			});
 
-			return {
-				data: data.products,
-				meta: {
-					page,
-					limit,
-					total: data.total,
-					totalPages: Math.ceil(data.total / limit),
-				},
-			};
+			return toPaginated(data, page, limit);
 		});
 	}
 

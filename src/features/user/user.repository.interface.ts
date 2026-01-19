@@ -3,13 +3,14 @@ import type { Result } from "neverthrow";
 import type { User } from "@/shared/config/schema";
 import type { DatabaseError, NotFoundError } from "@/shared/errors";
 
+import type { PaginatedResult } from "@/shared/types";
 import type { CreateUserInput, UpdateUserInput } from "./user.types";
 
 export interface IUserRepository {
 	findAll(
 		page: number,
 		limit: number,
-	): Promise<Result<{ users: User[]; total: number }, DatabaseError>>;
+	): Promise<Result<PaginatedResult<User>, DatabaseError>>;
 
 	findById(id: string): Promise<Result<User, NotFoundError | DatabaseError>>;
 

@@ -1,16 +1,13 @@
-import type { DomainError } from "@/shared/errors";
-import {
-	DatabaseError,
-	HttpErrorResponse,
-	NotFoundError,
-	ValidationError,
-} from "@/shared/errors";
+import { BaseController } from "@/shared/http/base-controller";
 import type { PaginationQuery } from "@/shared/types";
+
 import type { UserService } from "./user.service";
 import type { CreateUserInput, UpdateUserInput } from "./user.types";
 
-export class UserController {
-	constructor(private readonly service: UserService) {}
+export class UserController extends BaseController {
+	constructor(private readonly service: UserService) {
+		super();
+	}
 
 	async getAll(query: PaginationQuery) {
 		const { page = 1, limit = 10 } = query;
@@ -56,26 +53,6 @@ export class UserController {
 		return result.match(
 			() => ({ status: 204 }),
 			(error) => this.handleError(error),
-		);
-	}
-
-	private handleError(error: DomainError): HttpErrorResponse {
-		if (error instanceof NotFoundError) {
-			return new HttpErrorResponse(error.message, error.code, 404);
-		}
-
-		if (error instanceof ValidationError) {
-			return new HttpErrorResponse(error.message, error.code, 400);
-		}
-
-		if (error instanceof DatabaseError) {
-			return new HttpErrorResponse("Internal server error", error.code, 500);
-		}
-
-		return new HttpErrorResponse(
-			"Internal server error",
-			"INTERNAL_ERROR",
-			500,
 		);
 	}
 }

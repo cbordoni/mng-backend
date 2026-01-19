@@ -2,14 +2,14 @@ import type { Result } from "neverthrow";
 
 import type { Product } from "@/shared/config/schema";
 import type { DatabaseError, NotFoundError } from "@/shared/errors";
-
+import type { PaginatedResult } from "@/shared/types";
 import type { CreateProductInput, UpdateProductInput } from "./product.types";
 
 export interface IProductRepository {
 	findAll(
 		page: number,
 		limit: number,
-	): Promise<Result<{ products: Product[]; total: number }, DatabaseError>>;
+	): Promise<Result<PaginatedResult<Product>, DatabaseError>>;
 
 	findById(id: string): Promise<Result<Product, NotFoundError | DatabaseError>>;
 
