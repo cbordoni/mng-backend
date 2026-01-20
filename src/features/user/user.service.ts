@@ -1,5 +1,4 @@
-import type { Result } from "neverthrow";
-import { err, ok } from "neverthrow";
+import { err, ok, type Result } from "neverthrow";
 
 import type { User } from "@/shared/config/schema";
 import {

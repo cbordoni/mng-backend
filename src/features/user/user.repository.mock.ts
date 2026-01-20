@@ -19,6 +19,12 @@ export class MockUserRepository
 		return super.findAll(page, limit);
 	}
 
+	async exists(id: string) {
+		const userExists = this.items.some((user) => user.id === id);
+
+		return ok(userExists);
+	}
+
 	async findByEmail(email: string) {
 		return this.findByPredicate((user) => user.email === email, email);
 	}

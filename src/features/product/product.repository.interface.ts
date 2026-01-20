@@ -13,6 +13,8 @@ export interface IProductRepository {
 
 	findById(id: string): Promise<Result<Product, NotFoundError | DatabaseError>>;
 
+	findByIds(ids: string[]): Promise<Result<Product[], DatabaseError>>;
+
 	create(data: CreateProductInput): Promise<Result<Product, DatabaseError>>;
 
 	update(

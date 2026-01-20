@@ -1,5 +1,9 @@
 import { HttpErrorResponse } from "@/shared/errors";
-import { healthService } from "./health.service";
+import { HealthRepository } from "./health.repository";
+import { HealthService } from "./health.service";
+
+const healthRepository = new HealthRepository();
+const healthService = new HealthService(healthRepository);
 
 class HealthController {
 	async check() {

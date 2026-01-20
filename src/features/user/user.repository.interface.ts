@@ -14,6 +14,8 @@ export interface IUserRepository {
 
 	findById(id: string): Promise<Result<User, NotFoundError | DatabaseError>>;
 
+	exists(id: string): Promise<Result<boolean, DatabaseError>>;
+
 	findByEmail(
 		email: string,
 	): Promise<Result<User, NotFoundError | DatabaseError>>;

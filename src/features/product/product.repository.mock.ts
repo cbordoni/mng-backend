@@ -19,6 +19,12 @@ export class MockProductRepository
 		return await super.findAll(page, limit);
 	}
 
+	async findByIds(ids: string[]) {
+		const products = this.items.filter((p) => ids.includes(p.id));
+
+		return ok(products);
+	}
+
 	async create(data: CreateProductInput) {
 		const product: Product = {
 			id: crypto.randomUUID(),

@@ -1,10 +1,10 @@
-import { count, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { err, ok } from "neverthrow";
 
 import { db } from "@/shared/config/database";
 import { users } from "@/shared/config/schema";
 import { NotFoundError } from "@/shared/errors";
-import { wrapDatabaseOperation } from "@/shared/utils/database";
+import { getTableCount, wrapDatabaseOperation } from "@/shared/utils/database";
 
 import type { IUserRepository } from "./user.repository.interface";
 import type { CreateUserInput, UpdateUserInput } from "./user.types";
@@ -14,9 +14,9 @@ export class UserRepository implements IUserRepository {
 		return wrapDatabaseOperation(async () => {
 			const offset = (page - 1) * limit;
 
-			const [items, [{ value: total }]] = await Promise.all([
+			const [items, total] = await Promise.all([
 				db.select().from(users).limit(limit).offset(offset),
-				db.select({ value: count() }).from(users),
+				getTableCount(users),
 			]);
 
 			return { items, total };
@@ -36,6 +36,15 @@ export class UserRepository implements IUserRepository {
 
 			return ok(user);
 		});
+	}
+
+	async exists(id: string) {
+		const result = await wrapDatabaseOperation(
+			() => db.select({ id: users.id }).from(users).where(eq(users.id, id)),
+			"Failed to check user existence",
+		);
+
+		return result.map(([user]) => !!user);
 	}
 
 	async findByEmail(email: string) {

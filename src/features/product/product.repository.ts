@@ -1,4 +1,4 @@
-import { count, eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { err, ok } from "neverthrow";
 
 import { db } from "@/shared/config/database";
@@ -6,7 +6,7 @@ import { type Product, products } from "@/shared/config/schema";
 import { NotFoundError } from "@/shared/errors";
 import type { PaginatedResult } from "@/shared/types";
 import { removeUndefined } from "@/shared/utils";
-import { wrapDatabaseOperation } from "@/shared/utils/database";
+import { getTableCount, wrapDatabaseOperation } from "@/shared/utils/database";
 
 import type { IProductRepository } from "./product.repository.interface";
 import type { CreateProductInput, UpdateProductInput } from "./product.types";
@@ -16,9 +16,9 @@ export class ProductRepository implements IProductRepository {
 		return wrapDatabaseOperation(async () => {
 			const offset = (page - 1) * limit;
 
-			const [items, [{ value: total }]] = await Promise.all([
+			const [items, total] = await Promise.all([
 				db.select().from(products).limit(limit).offset(offset),
-				db.select({ value: count() }).from(products),
+				getTableCount(products),
 			]);
 
 			return { items, total } as PaginatedResult<Product>;
@@ -38,6 +38,17 @@ export class ProductRepository implements IProductRepository {
 
 			return ok(product);
 		});
+	}
+
+	async findByIds(ids: string[]) {
+		if (ids.length === 0) {
+			return ok([]);
+		}
+
+		return wrapDatabaseOperation(
+			() => db.select().from(products).where(inArray(products.id, ids)),
+			"Failed to fetch products",
+		);
 	}
 
 	async create(data: CreateProductInput) {

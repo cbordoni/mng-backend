@@ -1,6 +1,8 @@
-import type { ResultAsync } from "neverthrow";
-import { fromPromise } from "neverthrow";
+import { count, type SQL } from "drizzle-orm";
+import type { PgTable } from "drizzle-orm/pg-core";
+import { fromPromise, type ResultAsync } from "neverthrow";
 
+import { db } from "@/shared/config/database";
 import { DatabaseError } from "@/shared/errors";
 
 export async function wrapDatabaseOperation<T>(
@@ -14,4 +16,19 @@ export async function wrapDatabaseOperation<T>(
 				`${errorContext}: ${error instanceof Error ? error.message : "Unknown error"}`,
 			),
 	);
+}
+
+export async function getTableCount(
+	table: PgTable,
+	where?: SQL,
+): Promise<number> {
+	let query = db.select({ value: count() }).from(table);
+
+	if (where) {
+		query = query.where(where) as typeof query;
+	}
+
+	const [result] = await query;
+
+	return Number(result?.value ?? 0);
 }

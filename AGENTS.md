@@ -63,6 +63,8 @@ src/
 - Tudo que **pode ser reutilizado** entre features **DEVE** ficar em `shared`
 - Uma feature **não deve importar diretamente** arquivos de outra feature
 - Comunicação entre features ocorre via serviços ou contratos bem definidos
+- Uma feature **não deve acessar diretamente** tabelas de outras features. Sempre use contratos de repositórios
+- Sempre desenvolva mantendo os princípios SOLID e DRY
 
 ---
 
@@ -185,6 +187,17 @@ app.use(authRoutes);
 - Usar preferencialmente path aliases
 - Sempre adicionar uma nova linha em branco após um if statement
 - Sempre separar imports do projeto com dependências
+- Classes que implementam interfaces ou extendem outras classes não precisam ter seus métodos herdados com explícito tipo de retorno
+- Sempre inserir linhas em branco entre blocos lógicos de código para melhorar legibilidade e manutenção.
+- É obrigatório haver uma linha em branco entre:
+- Importações e qualquer outro tipo de statement
+- Declarações de variáveis (const, let, var) e:
+- Estruturas de controle (if, for, while, switch, try/catch)
+- Retornos (return, throw)
+- Blocos de função/método e o próximo statement
+- Statements consecutivos de tipos diferentes
+- Nunca remover linhas em branco exigidas pelas regras do BiomeJS.
+- O código gerado não pode depender de autofix posterior para atender essa regra.
 
 ```ts
 import {} from "bun";

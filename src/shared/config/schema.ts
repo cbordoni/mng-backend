@@ -44,3 +44,46 @@ export const products = pgTable("products", {
 
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
+
+export const orders = pgTable("orders", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	userId: uuid("user_id")
+		.notNull()
+		.references(() => users.id, { onDelete: "cascade" }),
+	total: numeric("total", {
+		precision: 10,
+		scale: 2,
+	}).notNull(),
+	status: text("status")
+		.notNull()
+		.default("pending")
+		.$type<"pending" | "confirmed" | "shipped" | "delivered" | "cancelled">(),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type Order = typeof orders.$inferSelect;
+export type NewOrder = typeof orders.$inferInsert;
+
+export const orderItems = pgTable("order_items", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	orderId: uuid("order_id")
+		.notNull()
+		.references(() => orders.id, { onDelete: "cascade" }),
+	productId: uuid("product_id")
+		.notNull()
+		.references(() => products.id, { onDelete: "restrict" }),
+	productName: text("product_name").notNull(),
+	quantity: integer("quantity").notNull(),
+	priceAtOrder: numeric("price_at_order", {
+		precision: 10,
+		scale: 2,
+	}).notNull(),
+	subtotal: numeric("subtotal", {
+		precision: 10,
+		scale: 2,
+	}).notNull(),
+});
+
+export type OrderItem = typeof orderItems.$inferSelect;
+export type NewOrderItem = typeof orderItems.$inferInsert;

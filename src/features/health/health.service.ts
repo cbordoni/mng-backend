@@ -1,29 +1,17 @@
 import { ok, type Result } from "neverthrow";
 
-import { db } from "@/shared/config/database";
 import type { DomainError } from "@/shared/errors";
 
+import type { IHealthRepository } from "./health.repository.interface";
 import type { HealthStatus } from "./health.types";
 
 class HealthService {
+	constructor(private readonly repository: IHealthRepository) {}
+
 	async checkHealth(): Promise<Result<HealthStatus, DomainError>> {
-		try {
-			const startTime = performance.now();
+		const result = await this.repository.checkDatabaseConnection();
 
-			// Simple query to check database connectivity
-			await db.execute("SELECT 1");
-
-			const latency = Math.round(performance.now() - startTime);
-
-			return ok({
-				status: "ok",
-				database: {
-					connected: true,
-					latency,
-				},
-				timestamp: new Date().toISOString(),
-			});
-		} catch (_) {
+		if (result.isErr()) {
 			return ok({
 				status: "error",
 				database: {
@@ -32,7 +20,18 @@ class HealthService {
 				timestamp: new Date().toISOString(),
 			});
 		}
+
+		const latency = result.value;
+
+		return ok({
+			status: "ok",
+			database: {
+				connected: true,
+				latency,
+			},
+			timestamp: new Date().toISOString(),
+		});
 	}
 }
 
-export const healthService = new HealthService();
+export { HealthService };
