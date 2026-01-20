@@ -5,43 +5,23 @@ import { healthRoutes } from "@/features/health/health.routes";
 import { orderRoutes } from "@/features/order/order.routes";
 import { productRoutes } from "@/features/product/product.routes";
 import { userRoutes } from "@/features/user/user.routes";
-import { HttpErrorResponse } from "@/shared/errors";
-import { logger } from "@/shared/logger";
+import { errorLoggerPlugin } from "@/shared/http/error-logger.plugin";
+import { httpErrorMapperPlugin } from "@/shared/http/http-error-mapper.plugin";
+import { requestLoggerPlugin } from "@/shared/http/request-logger.plugin";
+
+const version = Bun.env.npm_package_version ?? "1.0.0";
 
 export const app = new Elysia()
-	.onRequest(({ request }) => {
-		logger.info("Incoming request", {
-			method: request.method,
-			url: request.url,
-		});
-	})
-	.onAfterHandle(({ responseValue, set }) => {
-		if (responseValue instanceof HttpErrorResponse) {
-			set.status = responseValue.status;
-
-			return {
-				error: responseValue.message,
-				code: responseValue.code,
-			};
-		}
-
-		return responseValue;
-	})
-	.onError(({ code, error, request }) => {
-		logger.error("Request error", {
-			code,
-			message: error instanceof Error ? error.message : String(error),
-			method: request.method,
-			url: request.url,
-		});
-	})
+	.use(requestLoggerPlugin)
+	.use(httpErrorMapperPlugin)
+	.use(errorLoggerPlugin)
 	.use(
 		openapi({
 			path: "/docs",
 			documentation: {
 				info: {
 					title: "MNG Backend V2 API",
-					version: "1.0.0",
+					version,
 					description: "A modern backend API built with Bun and Elysia",
 				},
 				tags: [
