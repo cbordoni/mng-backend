@@ -8,20 +8,27 @@ This feature follows the clean architecture pattern with clear separation of con
 
 ```
 user/
-├── user.types.ts       # Validation schemas and type definitions
-├── user.repository.ts  # Database access layer
-├── user.service.ts     # Business logic layer
-├── user.controller.ts  # HTTP response mapping layer
-└── user.routes.ts      # API route definitions
+├── user.types.ts                # Validation schemas and type definitions
+├── user.repository.interface.ts # Repository contract
+├── user.repository.ts           # Database access layer
+├── user.repository.mock.ts      # In-memory repository for testing
+├── user.service.ts              # Business logic layer
+├── user.controller.ts           # HTTP response mapping layer
+└── user.routes.ts               # API route definitions
 ```
 
 ### Layers
 
 #### Types (`user.types.ts`)
 
-- **CreateUserSchema**: Validation for creating users (name, email, cellphone)
-- **UpdateUserSchema**: Validation for updating users (optional fields)
+- **CreateUserSchema**: Validation for creating users
+  - Required: `name`, `email`, `cellphone`
+- **UpdateUserSchema**: Validation for updating users (all fields optional)
 - **UserIdSchema**: Validation for UUID parameters
+
+#### Repository Interface (`user.repository.interface.ts`)
+
+Defines the contract that all repository implementations must follow, enabling dependency injection and easy testing.
 
 #### Repository (`user.repository.ts`)
 
@@ -104,16 +111,19 @@ GET /users/:id
 
 ```json
 {
-  "data": {
-    "id": "uuid",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "cellphone": "+5511999999999",
-    "createdAt": "2026-01-19T10:00:00Z",
-    "updatedAt": "2026-01-19T10:00:00Z"
-  }
+  "id": "uuid",
+  "name": "John Doe",
+  "email": "john@example.com",
+  "cellphone": "+5511999999999",
+  "createdAt": "2026-01-19T10:00:00Z",
+  "updatedAt": "2026-01-19T10:00:00Z"
 }
 ```
+
+**Status Codes:**
+
+- `200 OK` - User found
+- `404 Not Found` - User doesn't exist
 
 ### Create User
 
@@ -131,20 +141,29 @@ POST /users
 }
 ```
 
+**Required Fields:**
+
+- `name` (string, min length: 1)
+- `email` (string, valid email format)
+- `cellphone` (string, 10-15 characters)
+
 **Response:** (Status: 201)
 
 ```json
 {
-  "data": {
-    "id": "uuid",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "cellphone": "+5511999999999",
-    "createdAt": "2026-01-19T10:00:00Z",
-    "updatedAt": "2026-01-19T10:00:00Z"
-  }
+  "id": "uuid",
+  "name": "John Doe",
+  "email": "john@example.com",
+  "cellphone": "+5511999999999",
+  "createdAt": "2026-01-19T10:00:00Z",
+  "updatedAt": "2026-01-19T10:00:00Z"
 }
 ```
+
+**Status Codes:**
+
+- `201 Created` - User created successfully
+- `400 Bad Request` - Validation error
 
 ### Update User
 
@@ -166,16 +185,20 @@ PATCH /users/:id
 
 ```json
 {
-  "data": {
-    "id": "uuid",
-    "name": "Jane Doe",
-    "email": "jane@example.com",
-    "cellphone": "+5511988888888",
-    "createdAt": "2026-01-19T10:00:00Z",
-    "updatedAt": "2026-01-19T10:30:00Z"
-  }
+  "id": "uuid",
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "cellphone": "+5511988888888",
+  "createdAt": "2026-01-19T10:00:00Z",
+  "updatedAt": "2026-01-19T10:30:00Z"
 }
 ```
+
+**Status Codes:**
+
+- `200 OK` - User updated successfully
+- `400 Bad Request` - Validation error
+- `404 Not Found` - User doesn't exist
 
 ### Delete User
 
@@ -183,13 +206,28 @@ PATCH /users/:id
 DELETE /users/:id
 ```
 
-**Response:** (Status: 204)
+**Parameters:**
 
-```json
-{
-  "status": 204
-}
-```
+- `id` (UUID) - User identifier
+
+**Status Codes:**
+
+- `204 No Content` - User deleted successfully
+- `404 Not Found` - User doesn't exist
+
+## Business Rules
+
+### Validation Rules
+
+1. **Name**: Cannot be empty (after trimming whitespace), minimum 1 character
+2. **Email**: Must be a valid email format
+3. **Cellphone**: Must be between 10-15 characters, should contain at least 10 digits after removing non-digit characters
+
+### Email Uniqueness
+
+- Email addresses must be unique across all users
+- Database constraint enforces uniqueness
+- Duplicate email will result in a database error
 
 ## Error Responses
 
@@ -223,7 +261,7 @@ DELETE /users/:id
 }
 ```
 
-## Validation Rules
+## Validation Rules (Schema Level)
 
 ### Create User
 
@@ -237,10 +275,12 @@ DELETE /users/:id
 - `email`: Optional, valid email format if provided
 - `cellphone`: Optional, 10-15 characters if provided
 
-### Business Logic
+## Testing
 
-- Name cannot be empty (trimmed)
-- Cellphone must have at least 10 digits (non-digit characters removed)
+The feature includes:
+
+- **Unit Tests** (`user.service.test.ts`): Business logic validation
+- **Mock Repository** (`user.repository.mock.ts`): In-memory implementation for fast tests
 
 ## Database Schema
 
@@ -299,7 +339,48 @@ curl -X PATCH http://localhost:3000/users/123e4567-e89b-12d3-a456-426614174000 \
 curl -X DELETE http://localhost:3000/users/123e4567-e89b-12d3-a456-426614174000
 ```
 
-## Testing
+## Use Cases
+
+### User Registration
+
+```typescript
+// Register new user with validation
+const result = await service.createUser({
+  name: "John Doe",
+  email: "john@example.com",
+  cellphone: "+5511999999999",
+});
+```
+
+### User Profile Updates
+
+```typescript
+// Update only specific fields
+await service.updateUser(userId, {
+  cellphone: "+5511988888888",
+});
+```
+
+### User Listing with Pagination
+
+```typescript
+// Get paginated list of users
+const users = await service.getAllUsers(1, 20);
+```
+
+## Compliance
+
+This feature follows all rules defined in [AGENTS.md](../../../AGENTS.md):
+
+- ✅ Result Pattern with neverthrow (no thrown errors)
+- ✅ Feature-based structure
+- ✅ Clear separation of concerns (repository → service → controller → routes)
+- ✅ No business logic in controller/routes
+- ✅ Repository interface for dependency injection
+- ✅ Comprehensive validation in service layer
+- ✅ TypeBox schemas for HTTP validation
+
+## OpenAPI Documentation
 
 See OpenAPI documentation at `/docs` for interactive API testing.
 
@@ -308,12 +389,12 @@ See OpenAPI documentation at `/docs` for interactive API testing.
 - **Elysia**: HTTP framework
 - **Drizzle ORM**: Database operations
 - **neverthrow**: Result pattern for error handling
-- **@sinclair/typebox**: Schema validation (via Elysia's `t`)
+- **TypeBox** (via Elysia): Schema validation
 
 ## Shared Types
 
 This feature uses shared types from `@/shared/types`:
 
-- `PaginationQuerySchema`
-- `PaginationQuery`
-- `PaginatedResponse<T>`
+- `PaginationQuerySchema` - Query parameter validation
+- `PaginationQuery` - Pagination input type
+- `PaginatedResponse<T>` - Standardized pagination response format
