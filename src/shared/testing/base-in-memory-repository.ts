@@ -56,6 +56,19 @@ export abstract class BaseInMemoryRepository<T extends { id: string }> {
 		return ok(index);
 	}
 
+	protected async findByPredicate(
+		predicate: (item: T) => boolean,
+		identifier: string,
+	): Promise<Result<T, NotFoundError>> {
+		const item = this.items.find(predicate);
+
+		if (!item) {
+			return err(new NotFoundError(this.entityName, identifier));
+		}
+
+		return ok(item);
+	}
+
 	// Helper methods for testing
 	setItems(items: T[]) {
 		this.items = items;

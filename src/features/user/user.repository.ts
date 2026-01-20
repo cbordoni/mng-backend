@@ -38,6 +38,21 @@ export class UserRepository implements IUserRepository {
 		});
 	}
 
+	async findByEmail(email: string) {
+		const result = await wrapDatabaseOperation(
+			() => db.select().from(users).where(eq(users.email, email)),
+			"Failed to fetch user by email",
+		);
+
+		return result.andThen(([user]) => {
+			if (!user) {
+				return err(new NotFoundError("User", email));
+			}
+
+			return ok(user);
+		});
+	}
+
 	async create(data: CreateUserInput) {
 		const result = await wrapDatabaseOperation(
 			() =>

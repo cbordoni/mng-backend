@@ -14,6 +14,10 @@ export interface IUserRepository {
 
 	findById(id: string): Promise<Result<User, NotFoundError | DatabaseError>>;
 
+	findByEmail(
+		email: string,
+	): Promise<Result<User, NotFoundError | DatabaseError>>;
+
 	create(data: CreateUserInput): Promise<Result<User, DatabaseError>>;
 
 	update(

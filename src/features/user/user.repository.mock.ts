@@ -19,6 +19,10 @@ export class MockUserRepository
 		return super.findAll(page, limit);
 	}
 
+	async findByEmail(email: string) {
+		return this.findByPredicate((user) => user.email === email, email);
+	}
+
 	async create(data: CreateUserInput) {
 		const user: User = {
 			id: crypto.randomUUID(),

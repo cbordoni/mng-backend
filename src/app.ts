@@ -1,6 +1,7 @@
 import { openapi } from "@elysiajs/openapi";
 import { Elysia } from "elysia";
 
+import { authRoutes } from "@/features/auth/auth.routes";
 import { healthRoutes } from "@/features/health/health.routes";
 import { productRoutes } from "@/features/product/product.routes";
 import { userRoutes } from "@/features/user/user.routes";
@@ -44,6 +45,7 @@ export const app = new Elysia()
 					description: "A modern backend API built with Bun and Elysia",
 				},
 				tags: [
+					{ name: "Auth", description: "Authentication endpoints" },
 					{ name: "Users", description: "User management endpoints" },
 					{ name: "Products", description: "Product management endpoints" },
 					{ name: "Health", description: "Health check endpoints" },
@@ -57,6 +59,7 @@ export const app = new Elysia()
 			tags: ["Health"],
 		},
 	})
+	.use(authRoutes)
 	.use(healthRoutes)
 	.use(userRoutes)
 	.use(productRoutes);

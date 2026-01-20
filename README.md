@@ -15,11 +15,14 @@ A modern backend API built with Bun, Elysia, and PostgreSQL following clean arch
 ## Features
 
 - ✅ User CRUD (Create, Read, Update, Delete)
+- ✅ Product CRUD with image management
+- ✅ Google OAuth authentication
 - ✅ Feature-based architecture
 - ✅ Result pattern for error handling
 - ✅ Type-safe database operations
 - ✅ Input validation with TypeBox
 - ✅ Clean separation of concerns
+- ✅ OpenAPI documentation
 
 ## Project Structure
 
@@ -72,7 +75,18 @@ src/
    ```
    DATABASE_URL=postgres://postgres:postgres@localhost:5432/mng_backend
    PORT=3000
+   DB_SYNC=false
    ```
+
+   For Google OAuth authentication, add your credentials:
+
+   ```
+   GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=your-client-secret
+   GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
+   ```
+
+   See [Google OAuth Setup](#google-oauth-setup) for instructions on obtaining credentials.
 
 4. **Run migrations**:
 
@@ -191,6 +205,40 @@ This project follows the rules defined in [AGENTS.md](./AGENTS.md):
 | cellphone  | TEXT      | Not Null              |
 | created_at | TIMESTAMP | Not Null, Default Now |
 | updated_at | TIMESTAMP | Not Null, Default Now |
+
+## Google OAuth Setup
+
+To enable Google OAuth authentication:
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the **Google+ API** (or People API)
+4. Navigate to **Credentials** → **Create Credentials** → **OAuth 2.0 Client ID**
+5. Configure the OAuth consent screen:
+   - Add your app name
+   - Add authorized domains
+   - Add scopes: `email`, `profile`, `openid`
+6. Create OAuth 2.0 credentials:
+   - Application type: **Web application**
+   - Add authorized redirect URIs:
+     - Development: `http://localhost:3000/auth/google/callback`
+     - Production: `https://your-domain.com/auth/google/callback`
+7. Copy the **Client ID** and **Client Secret** to your `.env` file
+
+### Authentication Flow
+
+1. Frontend redirects user to `GET /auth/google`
+2. User is redirected to Google's OAuth consent screen
+3. After consent, Google redirects to `/auth/google/callback` with authorization code
+4. Backend exchanges code for user info and creates/retrieves user
+5. Backend returns user session data
+
+### API Endpoints
+
+- `GET /auth/google` - Initiate OAuth flow (returns authorization URL)
+- `GET /auth/google/callback` - Handle OAuth callback (returns user session)
+
+Access the API documentation at `http://localhost:3000/docs` for interactive testing.
 
 ## Development
 
