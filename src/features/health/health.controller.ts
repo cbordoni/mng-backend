@@ -9,24 +9,13 @@ class HealthController {
 	async check() {
 		const result = await healthService.checkHealth();
 
-		return result.match(
-			(health) => {
-				if (health.status === "error") {
-					return new HttpErrorResponse(
-						"Health check failed",
-						"HEALTH_CHECK_FAILED",
-						503,
-					);
-				}
-				return health;
-			},
-			() => {
-				return new HttpErrorResponse(
+		return result.mapErr(
+			() =>
+				new HttpErrorResponse(
 					"Health check failed",
 					"HEALTH_CHECK_FAILED",
 					500,
-				);
-			},
+				),
 		);
 	}
 }

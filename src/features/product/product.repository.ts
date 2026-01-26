@@ -79,20 +79,17 @@ export class ProductRepository implements IProductRepository {
 		let oldPrice: string | undefined;
 
 		if (data.price !== undefined) {
-			const currentProduct = (await this.findById(id)).match(
-				(product) => product,
-				() => null,
-			);
+			const currentProduct = (await this.findById(id)).mapErr(() => null);
 
-			if (!currentProduct) {
+			if (!currentProduct.isOk()) {
 				return err(new NotFoundError("Product", id));
 			}
 
-			const currentPrice = Number.parseFloat(currentProduct.price);
+			const currentPrice = Number.parseFloat(currentProduct.value.price);
 			const newPrice = data.price;
 
 			if (newPrice !== currentPrice) {
-				oldPrice = currentProduct.price;
+				oldPrice = currentProduct.value.price;
 			}
 		}
 

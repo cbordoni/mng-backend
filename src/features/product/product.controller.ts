@@ -14,19 +14,13 @@ export class ProductController extends BaseController {
 
 		const result = await this.service.getAllProducts(page, limit);
 
-		return result.match(
-			(paginatedProducts) => paginatedProducts,
-			(error) => this.handleError(error),
-		);
+		return result.mapErr(this.handleError);
 	}
 
 	async getById(id: string) {
 		const result = await this.service.getProductById(id);
 
-		return result.match(
-			(product) => ({ data: product }),
-			(error) => this.handleError(error),
-		);
+		return result.match((product) => ({ data: product }), this.handleError);
 	}
 
 	async create(data: CreateProductInput) {
@@ -34,52 +28,37 @@ export class ProductController extends BaseController {
 
 		return result.match(
 			(product) => ({ data: product, status: 201 }),
-			(error) => this.handleError(error),
+			this.handleError,
 		);
 	}
 
 	async update(id: string, data: UpdateProductInput) {
 		const result = await this.service.updateProduct(id, data);
 
-		return result.match(
-			(product) => ({ data: product }),
-			(error) => this.handleError(error),
-		);
+		return result.match((product) => ({ data: product }), this.handleError);
 	}
 
 	async delete(id: string) {
 		const result = await this.service.deleteProduct(id);
 
-		return result.match(
-			() => ({ status: 204 }),
-			(error) => this.handleError(error),
-		);
+		return result.match(() => ({ status: 204 }), this.handleError);
 	}
 
 	async addImages(id: string, images: Record<string, string>) {
 		const result = await this.service.addImages(id, images);
 
-		return result.match(
-			(product) => ({ data: product }),
-			(error) => this.handleError(error),
-		);
+		return result.match((product) => ({ data: product }), this.handleError);
 	}
 
 	async deleteImage(id: string, resolution: string) {
 		const result = await this.service.deleteImage(id, resolution);
 
-		return result.match(
-			(product) => ({ data: product }),
-			(error) => this.handleError(error),
-		);
+		return result.match((product) => ({ data: product }), this.handleError);
 	}
 
 	async updatePrice(id: string, price: number) {
 		const result = await this.service.updateProduct(id, { price });
 
-		return result.match(
-			(product) => ({ data: product }),
-			(error) => this.handleError(error),
-		);
+		return result.match((product) => ({ data: product }), this.handleError);
 	}
 }

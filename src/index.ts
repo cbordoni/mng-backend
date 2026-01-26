@@ -13,10 +13,11 @@ if (Bun.env.DB_SYNC === "true") {
 		() => {
 			logger.info("Database synced successfully");
 		},
-		(error) => {
+		(e) => {
 			logger.error("Failed to sync database", {
-				error: error instanceof Error ? error.message : String(error),
+				error: e instanceof Error ? e.message : String(e),
 			});
+
 			process.exit(1);
 		},
 	);

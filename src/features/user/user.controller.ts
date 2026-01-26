@@ -14,19 +14,13 @@ export class UserController extends BaseController {
 
 		const result = await this.service.getAllUsers(page, limit);
 
-		return result.match(
-			(paginatedUsers) => paginatedUsers,
-			(error) => this.handleError(error),
-		);
+		return result.mapErr(this.handleError);
 	}
 
 	async getById(id: string) {
 		const result = await this.service.getUserById(id);
 
-		return result.match(
-			(user) => ({ data: user }),
-			(error) => this.handleError(error),
-		);
+		return result.match((user) => ({ data: user }), this.handleError);
 	}
 
 	async create(data: CreateUserInput) {
@@ -34,25 +28,19 @@ export class UserController extends BaseController {
 
 		return result.match(
 			(user) => ({ data: user, status: 201 }),
-			(error) => this.handleError(error),
+			this.handleError,
 		);
 	}
 
 	async update(id: string, data: UpdateUserInput) {
 		const result = await this.service.updateUser(id, data);
 
-		return result.match(
-			(user) => ({ data: user }),
-			(error) => this.handleError(error),
-		);
+		return result.match((user) => ({ data: user }), this.handleError);
 	}
 
 	async delete(id: string) {
 		const result = await this.service.deleteUser(id);
 
-		return result.match(
-			() => ({ status: 204 }),
-			(error) => this.handleError(error),
-		);
+		return result.match(() => ({ status: 204 }), this.handleError);
 	}
 }

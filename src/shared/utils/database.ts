@@ -11,9 +11,9 @@ export async function wrapDatabaseOperation<T>(
 ): Promise<ResultAsync<T, DatabaseError>> {
 	return await fromPromise(
 		operation(),
-		(error) =>
+		(e) =>
 			new DatabaseError(
-				`${errorContext}: ${error instanceof Error ? error.message : "Unknown error"}`,
+				`${errorContext}: ${e instanceof Error ? e.message : "Unknown error"}`,
 			),
 	);
 }

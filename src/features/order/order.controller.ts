@@ -14,19 +14,13 @@ export class OrderController extends BaseController {
 
 		const result = await this.service.getAllOrders(page, limit);
 
-		return result.match(
-			(paginatedOrders) => paginatedOrders,
-			(error) => this.handleError(error),
-		);
+		return result.mapErr(this.handleError);
 	}
 
 	async getById(id: string) {
 		const result = await this.service.getOrderById(id);
 
-		return result.match(
-			(order) => ({ data: order }),
-			(error) => this.handleError(error),
-		);
+		return result.match((order) => ({ data: order }), this.handleError);
 	}
 
 	async getByUserId(userId: string, query: PaginationQuery) {
@@ -34,10 +28,7 @@ export class OrderController extends BaseController {
 
 		const result = await this.service.getOrdersByUserId(userId, page, limit);
 
-		return result.match(
-			(paginatedOrders) => paginatedOrders,
-			(error) => this.handleError(error),
-		);
+		return result.mapErr(this.handleError);
 	}
 
 	async create(data: CreateOrderInput) {
@@ -45,25 +36,19 @@ export class OrderController extends BaseController {
 
 		return result.match(
 			(order) => ({ data: order, status: 201 }),
-			(error) => this.handleError(error),
+			this.handleError,
 		);
 	}
 
 	async update(id: string, data: UpdateOrderInput) {
 		const result = await this.service.updateOrder(id, data);
 
-		return result.match(
-			(order) => ({ data: order }),
-			(error) => this.handleError(error),
-		);
+		return result.match((order) => ({ data: order }), this.handleError);
 	}
 
 	async delete(id: string) {
 		const result = await this.service.deleteOrder(id);
 
-		return result.match(
-			() => ({ status: 204 }),
-			(error) => this.handleError(error),
-		);
+		return result.match(() => ({ status: 204 }), this.handleError);
 	}
 }

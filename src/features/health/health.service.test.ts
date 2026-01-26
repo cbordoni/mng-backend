@@ -30,13 +30,11 @@ describe("HealthService", () => {
 
 			const result = await healthService.checkHealth();
 
-			expect(result.isOk()).toBe(true);
+			expect(result.isErr()).toBe(true);
 
-			if (result.isOk()) {
-				const health = result.value;
-				expect(health.status).toBe("error");
-				expect(health.database.connected).toBe(false);
-				expect(health.timestamp).toBeDefined();
+			if (result.isErr()) {
+				const health = result.error;
+				expect(health.message).toBeDefined();
 			}
 		});
 

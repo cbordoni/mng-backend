@@ -1,6 +1,6 @@
-import { ok, type Result } from "neverthrow";
+import { err, ok, type Result } from "neverthrow";
 
-import type { DomainError } from "@/shared/errors";
+import { DomainError } from "@/shared/errors";
 
 import type { IHealthRepository } from "./health.repository.interface";
 import type { HealthStatus } from "./health.types";
@@ -12,13 +12,11 @@ class HealthService {
 		const result = await this.repository.checkDatabaseConnection();
 
 		if (result.isErr()) {
-			return ok({
-				status: "error",
-				database: {
-					connected: false,
-				},
-				timestamp: new Date().toISOString(),
-			});
+			return err(
+				new DomainError(
+					`Database health check failed: ${result.error.message}`,
+				),
+			);
 		}
 
 		const latency = result.value;

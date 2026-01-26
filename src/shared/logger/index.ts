@@ -53,7 +53,7 @@ class Logger {
 		const contextStr = context
 			? ` ${this.colorize(JSON.stringify(context), "dim")}`
 			: "";
-		return `[${coloredTimestamp}] [${coloredLevel}] ${message}${contextStr}`;
+		return `${coloredTimestamp} ${coloredLevel} ${message}${contextStr}`;
 	}
 
 	info(message: string, context?: LogContext): void {
