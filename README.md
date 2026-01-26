@@ -14,27 +14,25 @@ A modern backend API built with Bun, Elysia, and PostgreSQL following clean arch
 
 ## Features
 
-- ✅ User CRUD (Create, Read, Update, Delete)
-- ✅ Product CRUD with image management
-- ✅ Google OAuth authentication
+- ✅ Health check endpoint with DB latency
+- ✅ User CRUD with pagination and validation
+- ✅ Product CRUD with image management and price updates
+- ✅ Order management capturing product price snapshots
 - ✅ Feature-based architecture
 - ✅ Result pattern for error handling
 - ✅ Type-safe database operations
 - ✅ Input validation with TypeBox
-- ✅ Clean separation of concerns
-- ✅ OpenAPI documentation
+- ✅ OpenAPI documentation at `/docs`
 
 ## Project Structure
 
 ```
 src/
 ├── features/
-│   └── user/
-│       ├── user.controller.ts  # HTTP response mapping
-│       ├── user.service.ts     # Business logic
-│       ├── user.repository.ts  # Database operations
-│       ├── user.routes.ts      # API routes
-│       └── user.types.ts       # Validation schemas
+│   ├── health/
+│   ├── user/
+│   ├── product/
+│   └── order/
 ├── shared/
 │   ├── config/
 │   │   ├── database.ts         # DB connection
@@ -78,16 +76,6 @@ src/
    DB_SYNC=false
    ```
 
-   For Google OAuth authentication, add your credentials:
-
-   ```
-   GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
-   GOOGLE_CLIENT_SECRET=your-client-secret
-   GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
-   ```
-
-   See [Google OAuth Setup](#google-oauth-setup) for instructions on obtaining credentials.
-
 4. **Run migrations**:
 
    ```bash
@@ -98,6 +86,11 @@ src/
    ```bash
    bun run dev
    ```
+
+## API Overview
+
+- OpenAPI docs: `http://localhost:3000/docs`
+- Root health: `GET /health`
 
 ## Docker Commands
 
@@ -120,60 +113,73 @@ docker-compose exec postgres psql -U postgres -d mng_backend
 
 ## API Endpoints
 
+### Health
+
+- `GET /health` - Service and database status
+
 ### Users
 
-- `GET /users` - List all users
-- `GET /users/:id` - Get user by ID
-- `POST /users` - Create new user
-- `PATCH /users/:id` - Update user
-- `DELETE /users/:id` - Delete user
+- `GET /users` - Paginated list
+- `GET /users/:id` - Fetch one
+- `POST /users` - Create
+- `PATCH /users/:id` - Update
+- `DELETE /users/:id` - Delete
 
-### Example Requests
+### Products
 
-**Create User**:
+- `GET /products` - Paginated list
+- `GET /products/:id` - Fetch one
+- `POST /products` - Create
+- `PATCH /products/:id` - Update
+- `DELETE /products/:id` - Delete
+- `POST /products/:id/images` - Add images
+- `DELETE /products/:id/images` - Remove a resolution
+- `PATCH /products/:id/price` - Update price
+
+### Orders
+
+- `GET /orders` - Paginated list
+- `GET /orders/:id` - Fetch one
+- `GET /orders/user/:userId` - User orders with pagination
+- `POST /orders` - Create (captures product prices at purchase time)
+- `PATCH /orders/:id` - Update status
+- `DELETE /orders/:id` - Delete (pending/cancelled only)
+
+### Quick Examples
+
+Create user:
 
 ```bash
 curl -X POST http://localhost:3000/users \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "John Doe",
-    "email": "john@example.com",
-    "cellphone": "+5511999999999"
-  }'
+   -H "Content-Type: application/json" \
+   -d '{
+      "name": "John Doe",
+      "email": "john@example.com",
+      "cellphone": "+5511999999999"
+   }'
 ```
 
-**Get All Users**:
+Create order:
 
 ```bash
-curl http://localhost:3000/users
-```
-
-**Get User by ID**:
-
-```bash
-curl http://localhost:3000/users/{uuid}
-```
-
-**Update User**:
-
-```bash
-curl -X PATCH http://localhost:3000/users/{uuid} \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Jane Doe"
-  }'
-```
-
-**Delete User**:
-
-```bash
-curl -X DELETE http://localhost:3000/users/{uuid}
+curl -X POST http://localhost:3000/orders \
+   -H "Content-Type: application/json" \
+   -d '{
+      "userId": "<user-uuid>",
+      "items": [
+         { "productId": "<product-uuid>", "quantity": 2 }
+      ]
+   }'
 ```
 
 ## Available Scripts
 
 - `bun run dev` - Start development server with hot reload
+- `bun run dev:sync` - Start dev server and sync schema
 - `bun run start` - Start production server
+- `bun run start:sync` - Start production server and sync schema
+- `bun run test` - Run tests once
+- `bun run test:watch` - Run tests in watch mode
 - `bun run db:generate` - Generate migration files
 - `bun run db:migrate` - Apply migrations
 - `bun run db:push` - Push schema to database
@@ -195,56 +201,13 @@ This project follows the rules defined in [AGENTS.md](./AGENTS.md):
 
 ## Database Schema
 
-### Users Table
-
-| Column     | Type      | Constraints           |
-| ---------- | --------- | --------------------- |
-| id         | UUID      | Primary Key, Auto-gen |
-| name       | TEXT      | Not Null              |
-| email      | TEXT      | Not Null, Unique      |
-| cellphone  | TEXT      | Not Null              |
-| created_at | TIMESTAMP | Not Null, Default Now |
-| updated_at | TIMESTAMP | Not Null, Default Now |
-
-## Google OAuth Setup
-
-To enable Google OAuth authentication:
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Enable the **Google+ API** (or People API)
-4. Navigate to **Credentials** → **Create Credentials** → **OAuth 2.0 Client ID**
-5. Configure the OAuth consent screen:
-   - Add your app name
-   - Add authorized domains
-   - Add scopes: `email`, `profile`, `openid`
-6. Create OAuth 2.0 credentials:
-   - Application type: **Web application**
-   - Add authorized redirect URIs:
-     - Development: `http://localhost:3000/auth/google/callback`
-     - Production: `https://your-domain.com/auth/google/callback`
-7. Copy the **Client ID** and **Client Secret** to your `.env` file
-
-### Authentication Flow
-
-1. Frontend redirects user to `GET /auth/google`
-2. User is redirected to Google's OAuth consent screen
-3. After consent, Google redirects to `/auth/google/callback` with authorization code
-4. Backend exchanges code for user info and creates/retrieves user
-5. Backend returns user session data
-
-### API Endpoints
-
-- `GET /auth/google` - Initiate OAuth flow (returns authorization URL)
-- `GET /auth/google/callback` - Handle OAuth callback (returns user session)
-
-Access the API documentation at `http://localhost:3000/docs` for interactive testing.
+Drizzle migrations define tables for users, products, orders, and order items. Use `bun run db:studio` for an interactive view or inspect `drizzle/` for the current snapshots.
 
 ## Development
 
 The project uses:
 
-- Path aliases: `~/` maps to `src/`
+- Path aliases: `@/` maps to `src/`
 - Strict TypeScript configuration
 - BiomeJS for consistent code style
 - Drizzle for type-safe database queries
