@@ -1,6 +1,6 @@
-import type { DomainError } from "@/shared/errors";
 import {
 	DatabaseError,
+	type DomainError,
 	HttpErrorResponse,
 	NotFoundError,
 	ValidationError,
