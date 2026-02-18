@@ -13,6 +13,10 @@ export const users = pgTable("users", {
 	name: text("name").notNull(),
 	email: text("email").notNull().unique(),
 	cellphone: text("cellphone").notNull(),
+	role: text("role")
+		.notNull()
+		.default("customer")
+		.$type<"admin" | "seller" | "customer">(),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -87,3 +91,35 @@ export const orderItems = pgTable("order_items", {
 
 export type OrderItem = typeof orderItems.$inferSelect;
 export type NewOrderItem = typeof orderItems.$inferInsert;
+
+export const payments = pgTable("payments", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	orderId: uuid("order_id")
+		.notNull()
+		.references(() => orders.id, { onDelete: "cascade" }),
+	type: text("type")
+		.notNull()
+		.$type<
+			"pix" | "creditCard" | "debitCard" | "cash" | "installmentBooklet"
+		>(),
+	amount: text("amount").notNull(),
+	installments: integer("installments"),
+	status: text("status")
+		.notNull()
+		.default("pending")
+		.$type<
+			| "pending"
+			| "processing"
+			| "completed"
+			| "failed"
+			| "cancelled"
+			| "refunded"
+		>(),
+	transactionId: text("transaction_id"),
+	metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type Payment = typeof payments.$inferSelect;
+export type NewPayment = typeof payments.$inferInsert;

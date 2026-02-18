@@ -71,6 +71,7 @@ export class UserRepository implements IUserRepository {
 						name: data.name,
 						email: data.email,
 						cellphone: data.cellphone,
+						role: data.role,
 					})
 					.returning(),
 			"Failed to create user",

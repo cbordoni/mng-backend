@@ -14,7 +14,7 @@ export class ProductController extends BaseController {
 
 		const result = await this.service.getAllProducts(page, limit);
 
-		return result.mapErr(this.handleError);
+		return result.match((paginatedData) => paginatedData, this.handleError);
 	}
 
 	async getById(id: string) {

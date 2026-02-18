@@ -14,7 +14,7 @@ export class UserController extends BaseController {
 
 		const result = await this.service.getAllUsers(page, limit);
 
-		return result.mapErr(this.handleError);
+		return result.match((paginatedData) => paginatedData, this.handleError);
 	}
 
 	async getById(id: string) {
